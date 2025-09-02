@@ -7,7 +7,7 @@ Themes:
 - Last of its kind
 
 **Genre:** Horde Survival
-**Platform: **PC/Web
+**Platform:** PC/Web
 **Target Audience:** People who enjoy to break records in games
 
 :dart: **Core Concept**

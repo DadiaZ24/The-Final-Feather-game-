@@ -6,9 +6,9 @@ Themes:
 - Growth
 - Last of its kind
 
-**Genre:** Horde Survival
-**Platform:** PC/Web
-**Target Audience:** People who enjoy to break records in games
+**Genre:** Horde Survival <p/>
+**Platform:** PC/Web <p/>
+**Target Audience:** People who enjoy to break records in games <p/>
 
 :dart: **Core Concept**
 

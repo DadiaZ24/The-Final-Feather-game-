@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,6 +15,7 @@ public class EnemyHealthSystem : MonoBehaviour, IDamageable
     private float currentHealth;
 
     private Slider enemyHealthSlider;
+    public event Action OnDeath;
 
     void Start()
     {
@@ -31,16 +33,20 @@ public class EnemyHealthSystem : MonoBehaviour, IDamageable
     public void TakeDamage(float amount)
     {
         currentHealth -= amount;
-        if (currentHealth < 0) currentHealth = 0;
 
         if (enemyHealthSlider != null)
             enemyHealthSlider.value = currentHealth;
-        Die();
+
+        if (currentHealth < 0)
+        {
+            currentHealth = 0;
+            Die();
+        }
     }
 
     public void Die()
     {
-        if (currentHealth <= 0)
-            Destroy(gameObject);
+        OnDeath?.Invoke();
+        Destroy(gameObject);
     }
 }

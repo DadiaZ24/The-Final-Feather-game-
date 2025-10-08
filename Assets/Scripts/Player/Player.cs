@@ -157,7 +157,7 @@ public class Player : MonoBehaviour
         // Direção de movimento relativa à câmera
         Vector3 moveDir = (camForward * inputDir.z + camRight * inputDir.x).normalized;
 
-        // ✅ O player SEMPRE olha pra frente da câmera (horizontalmente)
+        // O player SEMPRE olha pra frente da câmera (horizontalmente)
         if (!isFirstPerson)
         {
             Quaternion targetRotation = Quaternion.LookRotation(camForward);
@@ -230,33 +230,36 @@ public class Player : MonoBehaviour
             if (animator != null)
                 animator.SetBool("Punching", true);
 
-            // origin & direction (use camera for FPS, forward for TPS)
+            // origin & direction
             Vector3 origin = isFirstPerson ? firstPersonCamera.transform.position : transform.position + Vector3.up * 1.0f;
             Vector3 dir = isFirstPerson ? firstPersonCamera.transform.forward : transform.forward;
 
-            // perform an overlap at attack zone in front of player (hits multiple enemies)
+            // com isto, permite-nos atingir vários inimigos duma vez só. Queremos manter???
             Vector3 center = origin + dir * (attackRange * 0.5f);
-            Collider[] hits = Physics.OverlapSphere(center, attackRadius, enemyLayer, QueryTriggerInteraction.Ignore);
+            Collider[] hits = new Collider[10];
+            // Aqui criamos uma esfera em que os inimigos dentro dessa esfera vão levar dano.
+            int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, hits, enemyLayer, QueryTriggerInteraction.Ignore);
 
-            foreach (var col in hits)
+            for (int i = 0; i < hitCount; i++)
             {
-                // try the concrete component first
-                var enemy = col.GetComponentInParent<EnemyHealthSystem>();
-                if (enemy != null)
-                {
-                    Debug.Log("I will take damage");
-                    enemy.TakeDamage(attackDamage);
-                    continue;
-                }
-                // or any IDamageable implementation
-                var dmg = col.GetComponentInParent<IDamageable>();
-                if (dmg != null)
-                    dmg.TakeDamage(attackDamage);
+                // Vamos buscar o collider atual e o sistema de vida do inimigo.
+                var hit = hits[i];
+                // Implementação de Interfaces vai-nos permitir verificar se existe algum componente que seja damageable.
+                // Isto é, eu posso ter um inimigo que perde vida, e então vai estar esse método em EnemyHealthSystem.
+                // No entanto, eu posso querer dar dano a uma porta e ter esse método no DoorHealthSystem.
+                // Se procurar pela Interface, vou buscar qualquer um dos sistemas
+                // Exemplo: em vez de ter var dmg = hit.GetComponentInParent<EnemyHealthSystem>(); hit.GetComponentInParent<DoorHealthSystem>();
+                // Só tenho hit.GetComponentInParent<IDamageable>();
+                var dmg = hit.GetComponentInParent<IDamageable>();
+                dmg?.TakeDamage(attackDamage);
             }
 
-            // debug
-            Debug.DrawRay(origin, dir * attackRange, Color.red, 0.5f);
-            Debug.Log($"Attack: hit {hits.Length} targets");
+            // Se só quisermos dar dano a um inimigo, temos esta forma
+            /*if (Physics.SphereCast(origin, attackRadius, dir, out RaycastHit hit, attackRange, enemyLayer, QueryTriggerInteraction.Ignore))
+            {
+                var dmg = hit.collider.GetComponentsInParent<MonoBehaviour>().OfType<IDamageable>().FirstOrDefault();
+                if (dmg != null) dmg.TakeDamage(attackDamage);
+            }*/
         }
     }
 

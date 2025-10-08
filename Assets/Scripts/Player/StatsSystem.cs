@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using static SliderBar;
 
 public class StatsSystem : MonoBehaviour
@@ -17,10 +18,18 @@ public class StatsSystem : MonoBehaviour
     public float basicAttackDamage = 1f;
     public float armor = 0f;
     public float agility = 0f;
+
+    private SliderBar playerSliderBar;
     void Start()
     {
         currentEnergy = maxEnergy;
         currentHealth = maxHealth;
+        playerSliderBar = GetComponentInChildren<SliderBar>();
+        if (playerSliderBar == null)
+        {
+            Debug.LogError("playerSliderBar is null");
+            return;
+        }
         UpdateBar();
     }
 
@@ -79,14 +88,14 @@ public class StatsSystem : MonoBehaviour
 
     private void UpdateBar()
     {
-        if (SliderBar.Instance != null)
+        if (playerSliderBar != null)
         {
-            SliderBar.Instance.SetValue(SliderBarEnum.Energy, currentEnergy, maxEnergy);
-            SliderBar.Instance.SetValue(SliderBarEnum.Health, currentHealth, maxHealth);
+            playerSliderBar.SetValue(SliderBarEnum.Energy, currentEnergy, maxEnergy);
+            playerSliderBar.SetValue(SliderBarEnum.Health, currentHealth, maxHealth);
         }
         else
         {
-            Debug.LogWarning("SliderBar.Instance is null!");
+            Debug.LogWarning("playerSliderBar is null!");
         }
     }
 }

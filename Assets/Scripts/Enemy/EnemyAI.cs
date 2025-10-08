@@ -40,7 +40,7 @@ public class EnemyAI : MonoBehaviour
 
         // Algo de bom é que podemos dar log de erros!!!! E de warnings!!!! Incríiiiiiiiiivel!
         if (player == null)
-            Debug.LogError("Attach the player gameobject to the EnemyAI script please");
+            player = GameObject.FindGameObjectWithTag("Player");
     }
 
     void Update()

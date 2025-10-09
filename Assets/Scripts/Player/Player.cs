@@ -25,8 +25,19 @@ public class Player : MonoBehaviour
     private float crouchSpeed = 1f;
 
     private float verticalVelocity;
-    private bool isGrounded;
-    public StatsSystem statSystem;
+	private bool isGrounded;
+
+	//dash
+	private float dashDistance = 4f;
+	private float dashDuration = 0.2f;
+	private float dashTimer;
+	private bool isDashing;
+	private Vector3 dashDirection;
+	private float dashStep;
+	private float dashDistanceMoved;
+	public StatsSystem statSystem;
+	
+
 
     //Animations
 
@@ -61,7 +72,8 @@ public class Player : MonoBehaviour
         HandleLook();
         HandleMovement();
         HandleJump();
-        HandleCrouch();
+		HandleCrouch();
+		HandleDash();
         ApplyGravity();
         HandleAbilities();
         HandleAttack();
@@ -171,9 +183,6 @@ public class Player : MonoBehaviour
         }
     }
 
-
-
-
     void ApplyGravity()
     {
         isGrounded = characterController.isGrounded;
@@ -217,10 +226,35 @@ public class Player : MonoBehaviour
         }
     }
 
-    // void HandleDash()
-    // {
-    // 	// double key movement forward and sides
-    // }
+    void HandleDash()
+	{
+		if (isDashing)
+		{
+			float dashStep = (dashDistance / dashDuration) * Time.deltaTime;
+			Vector3 move = dashDirection * dashStep;
+			characterController.Move(move);
+			dashDistanceMoved += move.magnitude;
+
+			dashTimer += Time.deltaTime;
+
+			//se chegar a distancia e tempo = acabou o dashing então fazemos reset
+			if (dashTimer >= dashDuration || dashDistanceMoved >= dashDistance)
+			{
+				isDashing = false;
+				dashTimer = 0f;
+				dashDistanceMoved = 0f;
+			}
+			return;
+		}
+		
+		if (Input.GetKeyDown(KeyCode.Q) && !isDashing)
+		{
+			dashDirection = transform.forward;
+			isDashing = true;
+			dashTimer = 0f;
+			dashDistanceMoved = 0f;
+		}
+	}
 
     void HandleAttack()
     {

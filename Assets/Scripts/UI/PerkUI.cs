@@ -16,7 +16,6 @@ public class PerkUI : MonoBehaviour
     {
         // Mostrar menu, pausar o jogo (podemos remover depois e deixar o jogo a correr com as animações, simplesmente bloquear camara)
         gameObject.SetActive(true);
-        Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
@@ -24,7 +23,6 @@ public class PerkUI : MonoBehaviour
     public void HideMenu()
     {
         gameObject.SetActive(false);
-        Time.timeScale = 1f;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }

@@ -240,6 +240,7 @@ public class Player : MonoBehaviour
 			//se chegar a distancia e tempo = acabou o dashing então fazemos reset
 			if (dashTimer >= dashDuration || dashDistanceMoved >= dashDistance)
 			{
+				animator.SetBool("Dashing", false);
 				isDashing = false;
 				dashTimer = 0f;
 				dashDistanceMoved = 0f;
@@ -247,9 +248,11 @@ public class Player : MonoBehaviour
 			return;
 		}
 		
-		if (Input.GetKeyDown(KeyCode.Q) && !isDashing)
+		if (Input.GetKeyDown(KeyCode.Q) && !isDashing && statSystem.GetCurrentEnergy() >= 25)
 		{
+			animator.SetBool("Dashing", true);
 			dashDirection = transform.forward;
+			statSystem.UseEnergy(25);
 			isDashing = true;
 			dashTimer = 0f;
 			dashDistanceMoved = 0f;

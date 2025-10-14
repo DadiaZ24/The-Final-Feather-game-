@@ -25,18 +25,20 @@ public class Player : MonoBehaviour
     private float crouchSpeed = 1f;
 
     private float verticalVelocity;
-	private bool isGrounded;
+    private bool isGrounded;
+    private float jumpHeight = 1.5f;
+    private Vector3 moveVelocity = Vector3.zero;
 
-	//dash
-	private float dashDistance = 4f;
-	private float dashDuration = 0.2f;
-	private float dashTimer;
-	private bool isDashing;
-	private Vector3 dashDirection;
-	private float dashStep;
-	private float dashDistanceMoved;
-	public StatsSystem statSystem;
-	
+    //dash
+    private float dashDistance = 4f;
+    private float dashDuration = 0.2f;
+    private float dashTimer;
+    private bool isDashing;
+    private Vector3 dashDirection;
+    private float dashStep;
+    private float dashDistanceMoved;
+    public StatsSystem statSystem;
+
 
 
     //Animations
@@ -72,31 +74,18 @@ public class Player : MonoBehaviour
         HandleLook();
         HandleMovement();
         HandleJump();
-		HandleCrouch();
-		HandleDash();
+        HandleCrouch();
+        HandleDash();
         ApplyGravity();
         HandleAbilities();
         HandleAttack();
         HandleCameraToggle();
         HandleAnimation();
-        // Example ability usage
-        if (Input.GetKeyDown(KeyCode.Space)) // Jump/Skill
-        {
-            if (statSystem.UseEnergy(20)) // cost = 20
-            {
-                Debug.Log("Ability activated!");
-                // Trigger your ability logic here
-            }
-            statSystem.TakeDamage(10f);
-        }
 
-        if (Input.GetKeyDown(KeyCode.F)) // Another ability
-        {
-            if (statSystem.UseEnergy(50)) // cost = 50
-            {
-                Debug.Log("Big ability activated!");
-            }
-        }
+        // apply all movement (horizontal + vertical) once per frame
+        Vector3 finalMove = (moveVelocity + Vector3.up * verticalVelocity) * Time.deltaTime;
+        if (characterController != null)
+            characterController.Move(finalMove);
     }
     void HandleLook()
     {
@@ -167,49 +156,48 @@ public class Player : MonoBehaviour
         camRight.Normalize();
 
         // Direção de movimento relativa à câmera
-        Vector3 moveDir = (camForward * inputDir.z + camRight * inputDir.x).normalized;
+        Vector3 moveDir = (camForward * inputDir.z + camRight * inputDir.x);
+        if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
 
         // O player SEMPRE olha pra frente da câmera (horizontalmente)
-        if (!isFirstPerson)
+        if (!isFirstPerson && moveDir.sqrMagnitude > 0.01f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(camForward);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
         }
 
-        // Movimento (frente/trás/lados relativos à câmera)
-        if (inputDir.magnitude >= 0.1f)
+        // set horizontal velocity (do NOT call Move here)
+        if (inputDir.magnitude >= 0.01f)
         {
-            characterController.Move(moveDir * currentSpeed * Time.deltaTime);
+            moveVelocity = moveDir * currentSpeed;
+        }
+        else
+        {
+            moveVelocity = Vector3.zero;
         }
     }
 
     void ApplyGravity()
     {
+        if (characterController == null) return;
+
         isGrounded = characterController.isGrounded;
 
         if (isGrounded && verticalVelocity < 0)
             verticalVelocity = -2f;
         else
             verticalVelocity += Physics.gravity.y * Time.deltaTime;
-
-        characterController.Move(new Vector3(0, verticalVelocity, 0) * Time.deltaTime);
     }
 
     void HandleJump()
     {
-        //space key = jump
-        bool isGrounded = CheckGrounded(); //so i can jump idle
+        if (characterController == null) return;
 
-        if (Input.GetButtonDown("Jump") && isGrounded)
+        if (Input.GetKeyDown(KeyCode.Space) && characterController.isGrounded)
         {
             Debug.Log("Jumping!!!");
-            verticalVelocity = Mathf.Sqrt(2f * -Physics.gravity.y);
+            verticalVelocity = Mathf.Sqrt(2f * jumpHeight * -Physics.gravity.y);
         }
-    }
-
-    bool CheckGrounded()
-    {
-        return Physics.Raycast(transform.position, Vector3.down, characterController.height / 2 + 0.1f);
     }
 
     void HandleCrouch()
@@ -227,37 +215,39 @@ public class Player : MonoBehaviour
     }
 
     void HandleDash()
-	{
-		if (isDashing)
-		{
-			float dashStep = (dashDistance / dashDuration) * Time.deltaTime;
-			Vector3 move = dashDirection * dashStep;
-			characterController.Move(move);
-			dashDistanceMoved += move.magnitude;
+    {
+        if (isDashing)
+        {
+            // moveVelocity passa a ser a dashMove quando damos dash
+            float dashSpeed = dashDistance / dashDuration;
+            Vector3 dashMove = dashDirection * dashSpeed;
+            moveVelocity = dashMove;
 
-			dashTimer += Time.deltaTime;
+            float dashStep = dashSpeed * Time.deltaTime;
+            dashDistanceMoved += dashStep;
+            dashTimer += Time.deltaTime;
 
-			//se chegar a distancia e tempo = acabou o dashing então fazemos reset
-			if (dashTimer >= dashDuration || dashDistanceMoved >= dashDistance)
-			{
-				animator.SetBool("Dashing", false);
-				isDashing = false;
-				dashTimer = 0f;
-				dashDistanceMoved = 0f;
-			}
-			return;
-		}
-		
-		if (Input.GetKeyDown(KeyCode.Q) && !isDashing && statSystem.GetCurrentEnergy() >= 25)
-		{
-			animator.SetBool("Dashing", true);
-			dashDirection = transform.forward;
-			statSystem.UseEnergy(25);
-			isDashing = true;
-			dashTimer = 0f;
-			dashDistanceMoved = 0f;
-		}
-	}
+            if (dashTimer >= dashDuration || dashDistanceMoved >= dashDistance)
+            {
+                animator.SetBool("Dashing", false);
+                isDashing = false;
+                dashTimer = 0f;
+                dashDistanceMoved = 0f;
+                moveVelocity = Vector3.zero;
+            }
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Q) && !isDashing && statSystem.GetCurrentEnergy() >= 25)
+        {
+            animator.SetBool("Dashing", true);
+            dashDirection = transform.forward;
+            statSystem.UseEnergy(25);
+            isDashing = true;
+            dashTimer = 0f;
+            dashDistanceMoved = 0f;
+        }
+    }
 
     void HandleAttack()
     {

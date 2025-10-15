@@ -8,7 +8,7 @@ public class ThirdPersonCamera : MonoBehaviour
     [Header("Settings")]
     public float distance = 5f;
     public float height = 2f;
-    public float mouseSense = 100f;
+    public float mouseSense = 2.0f;
 
     private float currentYaw = 0f;
     private float currentPitch = 10f;
@@ -20,8 +20,8 @@ public class ThirdPersonCamera : MonoBehaviour
             return;
         }
 
-        float mouseX = Input.GetAxis("Mouse X") * mouseSense * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSense * Time.deltaTime;
+        float mouseX = Input.GetAxis("Mouse X") * mouseSense;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSense;
 
         currentYaw += mouseX;
         currentPitch -= mouseY;

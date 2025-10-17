@@ -133,8 +133,9 @@ public class Player : MonoBehaviour
 
     void HandleMovement()
     {
-        float moveX = Input.GetAxis("Horizontal"); // A/D
-        float moveZ = Input.GetAxis("Vertical");   // W/S
+        // Use GetAxisRaw to avoid Unity's input smoothing which can cause a stop delay
+        float moveX = Input.GetAxisRaw("Horizontal"); // A/D
+        float moveZ = Input.GetAxisRaw("Vertical");  // W/S
 
         Vector3 inputDir = new Vector3(moveX, 0f, moveZ).normalized;
 
@@ -167,12 +168,14 @@ public class Player : MonoBehaviour
         }
 
         // set horizontal velocity (do NOT call Move here)
+        // Immediate stop when input is released: if magnitude is very small, snap to zero
         if (inputDir.magnitude >= 0.01f)
         {
             moveVelocity = moveDir * currentSpeed;
         }
         else
         {
+            // ensure no residual small values remain
             moveVelocity = Vector3.zero;
         }
     }

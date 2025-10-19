@@ -13,6 +13,6 @@ public class Scoring : MonoBehaviour
 	public void AddScore(int nbr)
 	{
 		score += nbr;
-		InfoUI.Instance.UpdateUI(1, score);
+		InfoUI.Instance.UpdateScore(score);
 	}
 }

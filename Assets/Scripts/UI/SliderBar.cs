@@ -16,6 +16,12 @@ public class SliderBar : MonoBehaviour
     public Transform target;
     public Vector3 offset = new(0, 1.2f, 0);
     private Camera mainCamera;
+    public static SliderBar Instance;
+
+    void Awake()
+    {
+        Instance = this;
+    }
 
     void Start()
     {

@@ -71,7 +71,7 @@ public class GameManager : MonoBehaviour
     // Vai colocar random positions no spawn. Temos que ajustar mais tarde isto
     Vector3 GetRandomSpawnPosition()
     {
-        float planeMinX = -50f;
+        /*float planeMinX = -50f;
         float planeMaxX = 50f;
         float planeMinZ = -50f;
         float planeMaxZ = 50f;
@@ -85,7 +85,7 @@ public class GameManager : MonoBehaviour
         if (NavMesh.SamplePosition(randomPos, out NavMeshHit hit, 20f, NavMesh.AllAreas))
         {
             return hit.position;
-        }
+        }*/
 
         return Vector3.zero;
     }
@@ -99,9 +99,8 @@ public class GameManager : MonoBehaviour
 
     public void OnPerkSelected()
     {
-        perkMenuUI.SetActive(false);
-
         currentStage++;
+        InfoUI.Instance.UpdateStage(currentStage);
         enemiesPerStage += 5;
         StartCoroutine(StartStage());
     }

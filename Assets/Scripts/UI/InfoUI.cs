@@ -26,9 +26,13 @@ public class InfoUI : MonoBehaviour
 
         timeText.text = string.Format("{0:00}:{1:00}:{2:00}", hours, minutes, seconds);
     }
-    public void UpdateUI(int stage, int score)
+    public void UpdateScore(int score)
+    {
+        scoreText.text = score.ToString();
+    }
+
+    public void UpdateStage(int stage)
     {
         stageText.text = stage.ToString();
-        scoreText.text = score.ToString();
     }
 }

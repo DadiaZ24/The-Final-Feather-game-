@@ -9,11 +9,10 @@ public class Scoring : MonoBehaviour
 	{
 		Instance = this;
 	}
-	
+
 	public void AddScore(int nbr)
 	{
 		score += nbr;
-		Debug.Log($"{score}");
-		//update UI call
+		InfoUI.Instance.UpdateUI(1, score);
 	}
 }

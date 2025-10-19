@@ -15,12 +15,12 @@ public class EnemyHealthSystem : MonoBehaviour, IDamageable
     private float currentHealth;
 
     private Slider enemyHealthSlider;
-	public event Action OnDeath;
-	private Scoring scoringSystem;
+    public event Action OnDeath;
+    private Scoring scoringSystem;
 
     void Start()
-	{
-		scoringSystem = Scoring.Instance;
+    {
+        scoringSystem = Scoring.Instance;
         enemyHealthSlider = GetComponentInChildren<Slider>();
         if (!enemyHealthSlider)
             return;
@@ -42,7 +42,7 @@ public class EnemyHealthSystem : MonoBehaviour, IDamageable
         if (currentHealth < 0)
         {
             currentHealth = 0;
-			Die();
+            Die();
         }
     }
 
@@ -52,6 +52,6 @@ public class EnemyHealthSystem : MonoBehaviour, IDamageable
         Destroy(gameObject);
         // Scoring singleton might not be initialized in some execution orders (editor tests, scenes without scoring)
         // Guard call to avoid NullReferenceException
-        scoringSystem?.AddScore(20);
+        scoringSystem.AddScore(20);
     }
 }

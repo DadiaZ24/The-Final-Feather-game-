@@ -37,7 +37,7 @@ public class Player : MonoBehaviour
     private Vector3 dashDirection;
     private float dashStep;
     private float dashDistanceMoved;
-    public StatsSystem statSystem;
+    private StatsSystem statSystem;
 
 
 
@@ -52,6 +52,12 @@ public class Player : MonoBehaviour
     [SerializeField] private float attackRadius = 0.6f;
     [SerializeField] private float attackDamage = 20f;
     [SerializeField] private LayerMask enemyLayer; // set to Enemy layer in Inspector
+    public static Player Instance;
+
+    void Awake()
+    {
+        Instance = this;
+    }
 
     void Start()
     {

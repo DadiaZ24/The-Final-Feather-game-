@@ -1,4 +1,5 @@
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -40,13 +41,29 @@ public class SliderBar : MonoBehaviour
     {
         if (type == SliderBarEnum.Energy && energyBarSlider != null)
         {
+            // Alterar o tamanho da barra e atualizar os valores
+            var barWidth = energyBarSlider.GetComponent<RectTransform>().sizeDelta;
+            barWidth.x = max * 6;
+            energyBarSlider.GetComponent<RectTransform>().sizeDelta = barWidth;
             energyBarSlider.maxValue = max;
             energyBarSlider.value = current;
+
+            // Atualizar o texto com as stats certas
+            var text = energyBarSlider.GetComponentInChildren<TMP_Text>();
+            text.text = $"{(int)current}/{max}";
         }
         else if (type == SliderBarEnum.Health && healthBarSlider != null)
         {
+            // Alterar o tamanho da barra e atualizar os valores
+            var barWidth = healthBarSlider.GetComponent<RectTransform>().sizeDelta;
+            barWidth.x = max * 6;
+            healthBarSlider.GetComponent<RectTransform>().sizeDelta = barWidth;
             healthBarSlider.maxValue = max;
             healthBarSlider.value = current;
+
+            // Atualizar o texto com as stats certas
+            var text = healthBarSlider.GetComponentInChildren<TMP_Text>();
+            text.text = $"{(int)current}/{max}";
         }
 
         /*else if (type == SliderBarEnum.EnemyHealth && enemyHealthBarSlider != null)

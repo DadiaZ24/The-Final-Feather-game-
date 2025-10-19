@@ -41,21 +41,21 @@ public class StatsSystem : MonoBehaviour
         UpdateBar();
     }
 
-	// ENERGY METHODS
-	private void RegenerateEnergy()
-	{
-		if (currentEnergy < maxEnergy)
-		{
-			currentEnergy += energyRegenRate * Time.deltaTime;
-			if (currentEnergy > maxEnergy)
-				currentEnergy = maxEnergy;
-		}
-	}
-	
-	public float GetCurrentEnergy()
-	{
-		return currentEnergy;
-	}
+    // ENERGY METHODS
+    private void RegenerateEnergy()
+    {
+        if (currentEnergy < maxEnergy)
+        {
+            currentEnergy += energyRegenRate * Time.deltaTime;
+            if (currentEnergy > maxEnergy)
+                currentEnergy = maxEnergy;
+        }
+    }
+
+    public float GetCurrentEnergy()
+    {
+        return currentEnergy;
+    }
 
     public bool UseEnergy(int amount)
     {

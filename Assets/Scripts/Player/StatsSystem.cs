@@ -52,9 +52,14 @@ public class StatsSystem : MonoBehaviour
         }
     }
 
-    public float GetCurrentEnergy()
+	public float GetCurrentEnergy()
+	{
+		return currentEnergy;
+	}
+	
+	public float GetCurrentHealth()
     {
-        return currentEnergy;
+        return currentHealth;
     }
 
     public bool UseEnergy(int amount)

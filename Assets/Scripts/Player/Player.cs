@@ -1,5 +1,7 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using System.Collections;
+
 
 [RequireComponent(typeof(StatsSystem))]
 [RequireComponent(typeof(CharacterController))]
@@ -21,8 +23,7 @@ public class Player : MonoBehaviour
 
     private float walkSpeed = 2f;
     private float runSpeed = 5f;
-    private float acceleration = 3.0f;
-    private float crouchSpeed = 1f;
+	private float acceleration = 3.0f;
 
     private float verticalVelocity;
     private bool isGrounded;
@@ -80,13 +81,13 @@ public class Player : MonoBehaviour
         HandleLook();
         HandleMovement();
         HandleJump();
-        HandleCrouch();
         HandleDash();
         ApplyGravity();
         HandleAbilities();
         HandleAttack();
         HandleCameraToggle();
-        HandleAnimation();
+		HandleAnimation();
+		OnDeath();
 
         // apply all movement (horizontal + vertical) once per frame
         Vector3 finalMove = (moveVelocity + Vector3.up * verticalVelocity) * Time.deltaTime;
@@ -148,7 +149,6 @@ public class Player : MonoBehaviour
         // Velocidade base
         float currentSpeed = walkSpeed;
         if (Input.GetKey(KeyCode.LeftShift)) currentSpeed = runSpeed;
-        else if (Input.GetKey(KeyCode.LeftControl)) currentSpeed = crouchSpeed;
 
         // Pega a câmera ativa
         Transform camTransform = isFirstPerson ? firstPersonCamera.transform : thirdPersonCamera.transform;
@@ -209,20 +209,6 @@ public class Player : MonoBehaviour
         }
     }
 
-    void HandleCrouch()
-    {
-        if (Input.GetKeyDown(KeyCode.LeftControl))
-        {
-            characterController.height = 1f; //crouch height
-            Debug.Log("DOWN!!!");
-        }
-        else if (Input.GetKeyUp(KeyCode.LeftControl))
-        {
-            characterController.height = 2f; //stand height
-            Debug.Log("UP!!!");
-        }
-    }
-
     void HandleDash()
     {
         if (isDashing)
@@ -247,7 +233,7 @@ public class Player : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.Q) && !isDashing && statSystem.GetCurrentEnergy() >= 25)
+        if (Input.GetKeyDown(KeyCode.V) && !isDashing && statSystem.GetCurrentEnergy() >= 25)
         {
             animator.SetBool("Dashing", true);
             dashDirection = transform.forward;
@@ -299,77 +285,105 @@ public class Player : MonoBehaviour
         }
     }
 
-    void HandleAbilities()
-    {
-        if (Input.GetKeyDown(KeyCode.R))
-            Debug.Log("Ability RRR!!!");
-    }
+	void HandleAbilities()
+	{
+		if (Input.GetKeyDown(KeyCode.Q) && statSystem.GetCurrentEnergy() >= 50)
+		{
+			statSystem.UseEnergy(50);
+			verticalVelocity = Mathf.Sqrt(2f * jumpHeight * -Physics.gravity.y);
+			animator.SetBool("SmashUp", true);
+			StartCoroutine(Smash());
+		}
+		if (Input.GetKeyDown(KeyCode.E))
+			Debug.Log("Ability EEE!!!");
+	}
+	IEnumerator Smash()
+		{
+   			yield return new WaitForSeconds(0.6f); // wait x second
+  		 	animator.SetBool("SmashUp", false);
+		}
 
-    void HandleAnimation()
-    {
-        if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.7f && animator.GetCurrentAnimatorStateInfo(0).IsName("Punching"))
-            animator.SetBool("Punching", false);
-        if (Input.GetKey(KeyCode.W))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity < 2)
-                verticalAnimVelocity += Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity < 1)
-                verticalAnimVelocity += Time.deltaTime * acceleration;
+	void HandleAnimation()
+	{
+		if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.7f && animator.GetCurrentAnimatorStateInfo(0).IsName("Punching"))
+			animator.SetBool("Punching", false);
+		if (Input.GetKey(KeyCode.W))
+		{
+			if (Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity < 2)
+				verticalAnimVelocity += Time.deltaTime * acceleration;
+			else if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity < 1)
+				verticalAnimVelocity += Time.deltaTime * acceleration;
+			if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity >= 1)
+				verticalAnimVelocity -= Time.deltaTime * acceleration;
 
-            animator.SetFloat("Vertical", verticalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.W) && verticalAnimVelocity > 0)
-        {
-            verticalAnimVelocity -= Time.deltaTime * acceleration;
-            animator.SetFloat("Vertical", verticalAnimVelocity);
+			animator.SetFloat("Vertical", verticalAnimVelocity);
+		}
+		else if (!Input.GetKey(KeyCode.W) && verticalAnimVelocity > 0)
+		{
+			verticalAnimVelocity -= Time.deltaTime * acceleration;
+			animator.SetFloat("Vertical", verticalAnimVelocity);
 
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity < 2)
-                horizontalAnimVelocity += Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity < 1)
-                horizontalAnimVelocity += Time.deltaTime * acceleration;
+		}
+		if (Input.GetKey(KeyCode.D))
+		{
+			if (Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity < 2)
+				horizontalAnimVelocity += Time.deltaTime * acceleration;
+			else if (!Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity < 1)
+				horizontalAnimVelocity += Time.deltaTime * acceleration;
 
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.D) && horizontalAnimVelocity > 0)
-        {
-            horizontalAnimVelocity -= Time.deltaTime * acceleration;
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
+			animator.SetFloat("Horizontal", horizontalAnimVelocity);
+		}
+		else if (!Input.GetKey(KeyCode.D) && horizontalAnimVelocity > 0)
+		{
+			horizontalAnimVelocity -= Time.deltaTime * acceleration;
+			animator.SetFloat("Horizontal", horizontalAnimVelocity);
 
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity > -2)
-                verticalAnimVelocity -= Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity > -1)
-                verticalAnimVelocity -= Time.deltaTime * acceleration;
+		}
+		if (Input.GetKey(KeyCode.S))
+		{
+			if (Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity > -2)
+				verticalAnimVelocity -= Time.deltaTime * acceleration;
+			else if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity > -1)
+				verticalAnimVelocity -= Time.deltaTime * acceleration;
 
-            animator.SetFloat("Vertical", verticalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.S) && verticalAnimVelocity < 0)
-        {
-            verticalAnimVelocity += Time.deltaTime * acceleration;
-            animator.SetFloat("Vertical", verticalAnimVelocity);
+			animator.SetFloat("Vertical", verticalAnimVelocity);
+		}
+		else if (!Input.GetKey(KeyCode.S) && verticalAnimVelocity < 0)
+		{
+			verticalAnimVelocity += Time.deltaTime * acceleration;
+			animator.SetFloat("Vertical", verticalAnimVelocity);
 
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity > -2)
-                horizontalAnimVelocity -= Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity > -1)
-                horizontalAnimVelocity -= Time.deltaTime * acceleration;
+		}
+		if (Input.GetKey(KeyCode.A))
+		{
+			if (Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity > -2)
+				horizontalAnimVelocity -= Time.deltaTime * acceleration;
+			else if (!Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity > -1)
+				horizontalAnimVelocity -= Time.deltaTime * acceleration;
 
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.A) && horizontalAnimVelocity < 0)
-        {
-            horizontalAnimVelocity += Time.deltaTime * acceleration;
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
-        }
+			animator.SetFloat("Horizontal", horizontalAnimVelocity);
+		}
+		else if (!Input.GetKey(KeyCode.A) && horizontalAnimVelocity < 0)
+		{
+			horizontalAnimVelocity += Time.deltaTime * acceleration;
+			animator.SetFloat("Horizontal", horizontalAnimVelocity);
+		}
+	}
+	
+		void OnDeath()
+		{
+    		if (statSystem.GetCurrentHealth() <= 0f)
+    			StartCoroutine(Death());
+		}
 
+		IEnumerator Death()
+		{
+			verticalVelocity = Mathf.Sqrt(1.2f * jumpHeight * -Physics.gravity.y);
+			animator.SetBool("Death", true);
+			yield return new WaitForSeconds(0.2f); // wait x second
+			yield return new WaitUntil(() => characterController.isGrounded);
+  		 	Time.timeScale = 0;
+		}
 
-    }
 
 }

@@ -26,7 +26,7 @@ public class InfoUI : MonoBehaviour
 
         timeText.text = string.Format("{0:00}:{1:00}:{2:00}", hours, minutes, seconds);
     }
-    public void UpdateScore(int score)
+    public void UpdateScore(long score)
     {
         scoreText.text = score.ToString();
     }

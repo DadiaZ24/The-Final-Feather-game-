@@ -7,9 +7,7 @@ public class AudioManager : MonoBehaviour
     [Header("Audio Sources")]
     public AudioSource musicSource;
     public AudioSource sfxSource;
-
-    [Header("Clips")]
-    public AudioClip menuMusic;
+    public AudioSource inGameMusic;
 
     void Awake()
     {
@@ -29,12 +27,13 @@ public class AudioManager : MonoBehaviour
         PlayMusic(musicSource.clip);
     }
 
-    public void PlayMusic(AudioClip clip)
+    public void PlayMusic(AudioClip clip, float volume = 1f)
     {
         if (!clip) return;
 
         musicSource.clip = clip;
         musicSource.loop = true;
+        musicSource.volume = volume;
         musicSource.Play();
     }
 
@@ -55,5 +54,11 @@ public class AudioManager : MonoBehaviour
     {
         musicSource.Stop();
         sfxSource.Stop();
+    }
+
+    public void StartGameSounds()
+    {
+        StopAllSounds();
+        PlayMusic(inGameMusic.clip, 0.1f);
     }
 }

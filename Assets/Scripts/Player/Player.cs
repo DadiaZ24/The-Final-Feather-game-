@@ -1,13 +1,24 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using System.Collections;
+
 
 [RequireComponent(typeof(StatsSystem))]
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(Animator))]
 public class Player : MonoBehaviour
 {
+	[Header("VFX Settings")]
+	public float attackVfxHeigh = 0.4f;
 
-    [Header("View Settings")]
+	[Header("VFX")]
+	public GameObject Smash1;
+	public GameObject Smash2;
+	public GameObject Attack;
+	public GameObject Scream;
+	public GameObject Heal;
+
+	[Header("View Settings")]
     public Camera firstPersonCamera;
     public Camera thirdPersonCamera;
     public float mouseSensitivity = 2f;
@@ -21,8 +32,7 @@ public class Player : MonoBehaviour
 
     private float walkSpeed = 2f;
     private float runSpeed = 5f;
-    private float acceleration = 3.0f;
-    private float crouchSpeed = 1f;
+	private float acceleration = 3.0f;
 
     private float verticalVelocity;
     private bool isGrounded;
@@ -42,13 +52,15 @@ public class Player : MonoBehaviour
 
 
     //Animations
-
     private float horizontalAnimVelocity = 0.0f;
     private float verticalAnimVelocity = 0.0f;
-    private Animator animator;
+	private Animator animator;
+	private float pauseFrameNormalizedTime = 0.8f;
+	private bool pausedForLanding = false;
 
-    // attack settings
-    [SerializeField] private float attackRange = 2f;
+
+	[Header("Attack Settings")]
+	[SerializeField] private float attackRange = 2f;
     [SerializeField] private float attackRadius = 0.6f;
     [SerializeField] private float attackDamage = 20f;
     [SerializeField] private LayerMask enemyLayer; // set to Enemy layer in Inspector
@@ -80,13 +92,14 @@ public class Player : MonoBehaviour
         HandleLook();
         HandleMovement();
         HandleJump();
-        HandleCrouch();
         HandleDash();
         ApplyGravity();
         HandleAbilities();
         HandleAttack();
         HandleCameraToggle();
-        HandleAnimation();
+		HandleAnimation();
+		OnDeath();
+		SmashDownWait();
 
         // apply all movement (horizontal + vertical) once per frame
         Vector3 finalMove = (moveVelocity + Vector3.up * verticalVelocity) * Time.deltaTime;
@@ -148,7 +161,6 @@ public class Player : MonoBehaviour
         // Velocidade base
         float currentSpeed = walkSpeed;
         if (Input.GetKey(KeyCode.LeftShift)) currentSpeed = runSpeed;
-        else if (Input.GetKey(KeyCode.LeftControl)) currentSpeed = crouchSpeed;
 
         // Pega a câmera ativa
         Transform camTransform = isFirstPerson ? firstPersonCamera.transform : thirdPersonCamera.transform;
@@ -204,22 +216,7 @@ public class Player : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Space) && characterController.isGrounded)
         {
-            Debug.Log("Jumping!!!");
             verticalVelocity = Mathf.Sqrt(2f * jumpHeight * -Physics.gravity.y);
-        }
-    }
-
-    void HandleCrouch()
-    {
-        if (Input.GetKeyDown(KeyCode.LeftControl))
-        {
-            characterController.height = 1f; //crouch height
-            Debug.Log("DOWN!!!");
-        }
-        else if (Input.GetKeyUp(KeyCode.LeftControl))
-        {
-            characterController.height = 2f; //stand height
-            Debug.Log("UP!!!");
         }
     }
 
@@ -247,7 +244,7 @@ public class Player : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.Q) && !isDashing && statSystem.GetCurrentEnergy() >= 25)
+        if (Input.GetKeyDown(KeyCode.V) && !isDashing && statSystem.GetCurrentEnergy() >= 25)
         {
             animator.SetBool("Dashing", true);
             dashDirection = transform.forward;
@@ -273,9 +270,16 @@ public class Player : MonoBehaviour
             // com isto, permite-nos atingir vários inimigos duma vez só. Queremos manter???
             Vector3 center = origin + dir * (attackRange * 0.5f);
             Collider[] hits = new Collider[10];
-            // Aqui criamos uma esfera em que os inimigos dentro dessa esfera vão levar dano.
-            int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, hits, enemyLayer, QueryTriggerInteraction.Ignore);
-
+			// Aqui criamos uma esfera em que os inimigos dentro dessa esfera vão levar dano.
+			int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, hits, enemyLayer, QueryTriggerInteraction.Ignore);
+            Vector3 vfxPos = new Vector3(transform.position.x, transform.position.y + attackVfxHeigh, transform.position.z);
+            // Instantiate the VFX prefab and destroy the spawned instance when its particle system finishes.
+            if (Attack != null)
+            {
+                GameObject attackInst = Instantiate(Attack, vfxPos, transform.rotation);
+                // Start a coroutine that will destroy the spawned instance when its particle system finishes.
+                StartCoroutine(DestroyWhenParticleFinished(attackInst));
+            }
             for (int i = 0; i < hitCount; i++)
             {
                 // Vamos buscar o collider atual e o sistema de vida do inimigo.
@@ -299,77 +303,181 @@ public class Player : MonoBehaviour
         }
     }
 
-    void HandleAbilities()
+	void HandleAbilities()
+	{
+		if (Input.GetKeyDown(KeyCode.Q) && statSystem.GetCurrentEnergy() >= 50)
+		{
+			statSystem.UseEnergy(50);
+			verticalVelocity = Mathf.Sqrt(2f * jumpHeight * -Physics.gravity.y);
+			animator.SetBool("SmashUp", true);
+			StartCoroutine(SmashMake());
+		}
+		if (Input.GetKeyDown(KeyCode.E) && statSystem.GetCurrentEnergy() >= 50)
+		{
+			statSystem.UseEnergy(50);
+			animator.SetBool("Scream", true);
+			StartCoroutine(ScreamMake());
+		}
+	}
+
+    // Destroy a spawned VFX GameObject when its ParticleSystem (if any) has finished playing.
+    // Falls back to a short timed destroy if there's no ParticleSystem.
+    private IEnumerator DestroyWhenParticleFinished(GameObject obj)
     {
-        if (Input.GetKeyDown(KeyCode.R))
-            Debug.Log("Ability RRR!!!");
+        if (obj == null)
+            yield break;
+
+        // Look for a ParticleSystem on the object or its children.
+        ParticleSystem ps = obj.GetComponent<ParticleSystem>();
+        if (ps == null)
+            ps = obj.GetComponentInChildren<ParticleSystem>();
+
+        if (ps == null)
+        {
+            // No particle system found: fallback to a short delay then destroy.
+            yield return new WaitForSeconds(2f);
+            Destroy(obj);
+            yield break;
+        }
+
+        // Wait until the particle system is no longer alive (including children).
+        // IsAlive(true) checks the children as well when 'true' is passed.
+        while (ps != null && ps.IsAlive(true))
+            yield return null;
+
+        // Destroy the spawned instance when done.
+        Destroy(obj);
     }
+	IEnumerator SmashMake()
+	{
+		yield return new WaitForSeconds(0.6f); // wait x second
+		animator.SetBool("SmashUp", false);
+	}
+	IEnumerator ScreamMake()
+		{
+   			yield return new WaitForSeconds(0.6f); // wait x second
+  		 	animator.SetBool("Scream", false);
+		}
 
-    void HandleAnimation()
-    {
-        if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.7f && animator.GetCurrentAnimatorStateInfo(0).IsName("Punching"))
-            animator.SetBool("Punching", false);
-        if (Input.GetKey(KeyCode.W))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity < 2)
-                verticalAnimVelocity += Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity < 1)
-                verticalAnimVelocity += Time.deltaTime * acceleration;
+	void HandleAnimation()
+	{
+		if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.7f && animator.GetCurrentAnimatorStateInfo(0).IsName("Punching"))
+			animator.SetBool("Punching", false);
+		if (Input.GetKey(KeyCode.W))
+		{
+			if (Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity < 2)
+				verticalAnimVelocity += Time.deltaTime * acceleration;
+			else if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity < 1)
+				verticalAnimVelocity += Time.deltaTime * acceleration;
+			if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity >= 1)
+				verticalAnimVelocity -= Time.deltaTime * acceleration;
 
-            animator.SetFloat("Vertical", verticalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.W) && verticalAnimVelocity > 0)
-        {
-            verticalAnimVelocity -= Time.deltaTime * acceleration;
-            animator.SetFloat("Vertical", verticalAnimVelocity);
+			animator.SetFloat("Vertical", verticalAnimVelocity);
+		}
+		else if (!Input.GetKey(KeyCode.W) && verticalAnimVelocity > 0)
+		{
+			verticalAnimVelocity -= Time.deltaTime * acceleration;
+			animator.SetFloat("Vertical", verticalAnimVelocity);
 
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity < 2)
-                horizontalAnimVelocity += Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity < 1)
-                horizontalAnimVelocity += Time.deltaTime * acceleration;
+		}
+		if (Input.GetKey(KeyCode.D))
+		{
+			if (Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity < 2)
+				horizontalAnimVelocity += Time.deltaTime * acceleration;
+			else if (!Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity < 1)
+				horizontalAnimVelocity += Time.deltaTime * acceleration;
 
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.D) && horizontalAnimVelocity > 0)
-        {
-            horizontalAnimVelocity -= Time.deltaTime * acceleration;
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
+			animator.SetFloat("Horizontal", horizontalAnimVelocity);
+		}
+		else if (!Input.GetKey(KeyCode.D) && horizontalAnimVelocity > 0)
+		{
+			horizontalAnimVelocity -= Time.deltaTime * acceleration;
+			animator.SetFloat("Horizontal", horizontalAnimVelocity);
 
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity > -2)
-                verticalAnimVelocity -= Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity > -1)
-                verticalAnimVelocity -= Time.deltaTime * acceleration;
+		}
+		if (Input.GetKey(KeyCode.S))
+		{
+			if (Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity > -2)
+				verticalAnimVelocity -= Time.deltaTime * acceleration;
+			else if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity > -1)
+				verticalAnimVelocity -= Time.deltaTime * acceleration;
 
-            animator.SetFloat("Vertical", verticalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.S) && verticalAnimVelocity < 0)
-        {
-            verticalAnimVelocity += Time.deltaTime * acceleration;
-            animator.SetFloat("Vertical", verticalAnimVelocity);
+			animator.SetFloat("Vertical", verticalAnimVelocity);
+		}
+		else if (!Input.GetKey(KeyCode.S) && verticalAnimVelocity < 0)
+		{
+			verticalAnimVelocity += Time.deltaTime * acceleration;
+			animator.SetFloat("Vertical", verticalAnimVelocity);
 
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity > -2)
-                horizontalAnimVelocity -= Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity > -1)
-                horizontalAnimVelocity -= Time.deltaTime * acceleration;
+		}
+		if (Input.GetKey(KeyCode.A))
+		{
+			if (Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity > -2)
+				horizontalAnimVelocity -= Time.deltaTime * acceleration;
+			else if (!Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity > -1)
+				horizontalAnimVelocity -= Time.deltaTime * acceleration;
 
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.A) && horizontalAnimVelocity < 0)
-        {
-            horizontalAnimVelocity += Time.deltaTime * acceleration;
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
-        }
+			animator.SetFloat("Horizontal", horizontalAnimVelocity);
+		}
+		else if (!Input.GetKey(KeyCode.A) && horizontalAnimVelocity < 0)
+		{
+			horizontalAnimVelocity += Time.deltaTime * acceleration;
+			animator.SetFloat("Horizontal", horizontalAnimVelocity);
+		}
+	}
+	
+		void OnDeath()
+		{
+    		if (statSystem.GetCurrentHealth() <= 0f)
+    			StartCoroutine(Death());
+		}
 
+		IEnumerator Death()
+		{
+			verticalVelocity = Mathf.Sqrt(1.2f * jumpHeight * -Physics.gravity.y);
+			animator.SetBool("Death", true);
+			yield return new WaitForSeconds(0.2f); // wait x second
+			yield return new WaitUntil(() => characterController.isGrounded);
+  		 	Time.timeScale = 0;
+		}
 
-    }
+	public void OnSitEnd()
+	{
+		if (Smash1 != null && Smash2 != null)
+		{
+			Vector3 spawnPos = transform.position + Vector3.down * 0.4f;
+			Instantiate(Smash1, transform.position, transform.rotation);
+			Instantiate(Smash2, transform.position, transform.rotation);
+		}
+	}
 
+	public void SmashDownWait()
+	{
+		AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
+
+		if (info.IsName("SmashDown"))
+		{
+			if (!isGrounded && info.normalizedTime >= pauseFrameNormalizedTime && !pausedForLanding)
+			{
+				Debug.Log("Before");
+				animator.speed = 0.08f;
+				pausedForLanding = true;
+			}
+
+			if (isGrounded && pausedForLanding)
+			{
+				Debug.Log("After");
+				animator.speed = 1f;
+				pausedForLanding = false;
+			}
+		}
+	}
+
+	public void OnScream()
+	{
+		Quaternion spawnRotation = transform.rotation * Quaternion.Euler(90, 180, 0);
+		Vector3 spawnPos = new Vector3(transform.position.x, transform.position.y + 0.6f, transform.position.z);
+        Instantiate(Scream, spawnPos, spawnRotation);
+	}
+	
 }

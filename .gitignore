@@ -97,3 +97,9 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Firebase Binaries
+Assets/Firebase/Plugins/x86_64/
+Assets/Firebase/Plugins/arm64-v8a/
+Assets/Firebase/Plugins/armeabi-v7a/
+Assets/Firebase/Plugins/FirebaseCpp*

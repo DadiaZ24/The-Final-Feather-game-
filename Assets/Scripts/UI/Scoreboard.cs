@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Scoreboard : MonoBehaviour
 {
@@ -36,6 +37,17 @@ public class Scoreboard : MonoBehaviour
         while (!FirebaseManager.IsReady)
             yield return _waitForSeconds0_5;
         FirebaseManager.Instance.GetScores(OnScoresLoaded);
+    }
+
+    public void OnReloadGame()
+    {
+        Debug.Log("CLICKED!!!");
+        MainMenu.Instance.PlayGame();
+    }
+
+    public void OnQuitGame()
+    {
+        Application.Quit();
     }
 }
 

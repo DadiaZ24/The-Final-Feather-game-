@@ -8,6 +8,10 @@ public class AudioManager : MonoBehaviour
     public AudioSource musicSource;
     public AudioSource sfxSource;
     public AudioSource inGameMusic;
+    [Header("Clips")]
+    public AudioClip gameOverMusic;
+    public AudioClip gameOverVoice;
+    public AudioClip gameOverSound;
 
     void Awake()
     {

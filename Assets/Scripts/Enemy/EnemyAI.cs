@@ -122,4 +122,26 @@ public class EnemyAI : MonoBehaviour
         if (player)
             agent.SetDestination(player.transform.position);
     }
+
+    // subscribe/unsubscribe
+    void OnEnable() => Player.OnPlayerDied += StopAttacking;
+    void OnDisable() => Player.OnPlayerDied -= StopAttacking;
+
+    void StopAttacking()
+    {
+        if (agent != null)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+            agent.velocity = Vector3.zero;
+        }
+
+        if (animator != null)
+        {
+            animator.SetBool("isChasing", false);
+            animator.SetBool("isAttacking", false);
+        }
+
+        enabled = false;
+    }
 }

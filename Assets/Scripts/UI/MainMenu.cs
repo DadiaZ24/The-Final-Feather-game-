@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour
 {
+    public static MainMenu Instance;
     [Header("Panels")]
     public GameObject buttonPanel;
     public GameObject scoreboardPanel;
@@ -17,6 +18,15 @@ public class MainMenu : MonoBehaviour
 
     void Awake()
     {
+        if (!Instance)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
         buttonPanel.SetActive(false);
         scoreboardPanel.SetActive(false);
         nicknamePanel.SetActive(true);
@@ -41,6 +51,7 @@ public class MainMenu : MonoBehaviour
         SceneManager.LoadScene("Game");
         AudioManager.Instance.StartGameSounds();
     }
+
 
     public void ShowScoreboard()
     {

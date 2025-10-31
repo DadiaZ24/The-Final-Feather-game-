@@ -1,6 +1,7 @@
 using Unity.VisualScripting;
 using UnityEngine;
 using System.Collections;
+using System;
 
 
 [RequireComponent(typeof(StatsSystem))]
@@ -9,10 +10,12 @@ using System.Collections;
 public class Player : MonoBehaviour
 {
     private static readonly WaitForSeconds _waitForSeconds0_6 = new(0.6f);
+    private static readonly WaitForSeconds _waitForSeconds0_2 = new(0.2f);
+
     private static readonly WaitForSeconds _waitForSeconds2 = new(2f);
     [Header("Sound Settings")]
     public AudioSource SparrowQuakeSoundSource;
-    private static readonly WaitForSeconds _waitForSeconds0_2 = new(0.2f);
+    private static readonly WaitForSeconds _waitForSeconds0_5 = new(0.2f);
     [Header("VFX Settings")]
     public float attackVfxHeigh = 0.4f;
 
@@ -42,7 +45,7 @@ public class Player : MonoBehaviour
     private float verticalVelocity;
     private bool isGrounded;
     private bool isAlmostGrounded;
-    [SerializeField] private float almostGroundedDistance = 0.25f; // tweak in Inspector
+    [SerializeField] private float almostGroundedDistance = 0.25f;
     private float jumpHeight = 1.5f;
     private Vector3 moveVelocity = Vector3.zero;
 
@@ -67,12 +70,20 @@ public class Player : MonoBehaviour
     [SerializeField] private float attackRange = 2f;
     [SerializeField] private float attackRadius = 0.6f;
     [SerializeField] private float attackDamage = 20f;
-    [SerializeField] private LayerMask enemyLayer; // set to Enemy layer in Inspector
+    [SerializeField] private LayerMask enemyLayer;
     public static Player Instance;
+
+    private bool isDead = false;
+    public bool IsDead => isDead;
+
+    public static Action OnPlayerDied;
+
+    private bool savedScore;
 
     void Awake()
     {
         Instance = this;
+        savedScore = false;
     }
 
     void Start()
@@ -95,6 +106,14 @@ public class Player : MonoBehaviour
     {
         animator.speed = 1f;
 
+        if (isDead)
+        {
+            ApplyGravity();
+            Vector3 finalMoveDead = (moveVelocity + Vector3.up * verticalVelocity) * Time.deltaTime;
+            if (characterController != null)
+                characterController.Move(finalMoveDead);
+            return;
+        }
         HandleLook();
         HandleMovement();
         HandleJump();
@@ -437,11 +456,12 @@ public class Player : MonoBehaviour
 
     void OnDeath()
     {
-        if (statSystem.GetCurrentHealth() <= 0f)
+        if (statSystem.GetCurrentHealth() <= 0f && !isDead)
         {
+            isDead = true;
+            // notify subscribers (enemies etc.)
+            OnPlayerDied?.Invoke();
             StartCoroutine(Death());
-            string nickname = MainMenu.PlayerNickname;
-            FirebaseManager.Instance.SaveScore(nickname, Scoring.Instance.GetScore());
         }
     }
 
@@ -449,9 +469,15 @@ public class Player : MonoBehaviour
     {
         verticalVelocity = Mathf.Sqrt(1.2f * jumpHeight * -Physics.gravity.y);
         animator.SetBool("Death", true);
-        yield return _waitForSeconds0_2;
+        AudioManager.Instance.StopMusic();
+        AudioManager.Instance.PlaySFX(AudioManager.Instance.gameOverSound);
+        yield return _waitForSeconds2;
+        AudioManager.Instance.PlaySFX(AudioManager.Instance.gameOverVoice);
+        yield return _waitForSeconds2;
         yield return new WaitUntil(() => characterController.isGrounded);
-        Time.timeScale = 0;
+        if (!savedScore)
+            FirebaseManager.Instance.SaveScore(MainMenu.PlayerNickname, Scoring.Instance.GetScore());
+        GameManager.Instance.FinishGame();
     }
 
     public void OnSitEnd()

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -19,6 +20,7 @@ public class GameManager : MonoBehaviour
     public Transform player;
     public Transform[] spawnPoints;
     public GameObject perkMenuUI;
+
 
     private List<GameObject> aliveEnemies = new();
 
@@ -104,4 +106,14 @@ public class GameManager : MonoBehaviour
         enemiesPerStage += 5;
         StartCoroutine(StartStage());
     }
+
+    public void FinishGame()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        AudioManager.Instance.StopMusic();
+        AudioManager.Instance.PlayMusic(AudioManager.Instance.gameOverMusic);
+        SceneManager.LoadScene("GameOver");
+    }
+
 }

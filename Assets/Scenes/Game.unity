@@ -3871,6 +3871,7 @@ MonoBehaviour:
   player: {fileID: 1440576219}
   spawnPoints: []
   perkMenuUI: {fileID: 1123222889}
+  GameOver: {fileID: 0}
 --- !u!4 &1005645587
 Transform:
   m_ObjectHideFlags: 0
@@ -33095,6 +33096,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1807459434}
+  - component: {fileID: 1807459435}
   m_Layer: 0
   m_Name: AudioManager
   m_TagString: Untagged
@@ -33118,6 +33120,22 @@ Transform:
   - {fileID: 1201125029}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1807459435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1807459433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f577d0157fa6bb94180a03758f6e00a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  musicSource: {fileID: 0}
+  sfxSource: {fileID: 0}
+  inGameMusic: {fileID: 0}
+  mainMenuMusic: {fileID: 0}
 --- !u!43 &1838371966
 Mesh:
   m_ObjectHideFlags: 0

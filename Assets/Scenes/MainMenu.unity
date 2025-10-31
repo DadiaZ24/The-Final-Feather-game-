@@ -152,6 +152,9 @@ MonoBehaviour:
   musicSource: {fileID: 930029137}
   sfxSource: {fileID: 911818075}
   inGameMusic: {fileID: 463956488}
+  gameOverMusic: {fileID: 8300000, guid: 0c60173cfd839344aba9dcca01c3548b, type: 3}
+  gameOverVoice: {fileID: 8300000, guid: f78a63e8d94b63c4f9b4e065179361cd, type: 3}
+  gameOverSound: {fileID: 8300000, guid: bd49c8e3cf43b764cbe4e5cd3d907913, type: 3}
 --- !u!81 &182934850
 AudioListener:
   m_ObjectHideFlags: 0

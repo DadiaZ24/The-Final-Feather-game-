@@ -4,14 +4,12 @@ using UnityEngine;
 public class PerkUI : MonoBehaviour
 {
     // Nao ha muito que saber neste script. Mais tarde adicionamos um sistema de random things a aparecer.
-    private StatsSystem playerStats;
     public static PerkUI Instance;
     public SliderBar playerSliderBar;
 
     void Start()
     {
         // No inicio do script queremos sempre manter o menu fechado.
-        playerStats = GameManager.Instance.player.GetComponent<StatsSystem>();
         gameObject.SetActive(false);
     }
 
@@ -42,22 +40,22 @@ public class PerkUI : MonoBehaviour
 
     public void OnHealthPerk()
     {
-        playerStats.maxHealth += 20;
-        playerStats.TakeDamage(0);
+        Player.Instance.maxHealth += 20;
+        Player.Instance.TakeDamage(0);
         HideMenu();
         GameManager.Instance.OnPerkSelected();
     }
 
     public void OnDamagePerk()
     {
-        playerStats.basicAttackDamage += 2f;
+        Player.Instance.attackDamage += 2f;
         HideMenu();
         GameManager.Instance.OnPerkSelected();
     }
 
     public void OnEnergyPerk()
     {
-        playerStats.maxEnergy += 20;
+        Player.Instance.maxEnergy += 20;
         HideMenu();
         GameManager.Instance.OnPerkSelected();
     }

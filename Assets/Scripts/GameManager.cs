@@ -6,13 +6,14 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    private static WaitForSeconds _waitForSeconds1 = new WaitForSeconds(1f);
+    private static readonly WaitForSeconds _waitForSeconds1 = new(1f);
     public static GameManager Instance;
 
     [Header("Stage Settings")]
     public int currentStage = 1;
     public int enemiesPerStage = 10;
     public float spawnRadius = 15f;
+    public float minSpawnDistance = 8f;
     public float timeBetweenStages = 3f;
 
     [Header("References")]
@@ -20,6 +21,9 @@ public class GameManager : MonoBehaviour
     public Transform player;
     public Transform[] spawnPoints;
     public GameObject perkMenuUI;
+    public GameObject spawner;
+    [Header("Enemy Points to Gain")]
+    public long defaultEnemy = 2;
 
 
     private List<GameObject> aliveEnemies = new();
@@ -57,7 +61,7 @@ public class GameManager : MonoBehaviour
             GameObject enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
             aliveEnemies.Add(enemy);
 
-            var health = enemy.GetComponentInChildren<EnemyHealthSystem>();
+            var health = enemy.GetComponentInChildren<EnemyAI>();
             // Talvez seja algo diferente do que vêm normalmente. Mas criamos o evento OnDeath no lado do EnemyHealthSystem.
             // Quando o inimigo atinge 0 de vida, damos Invoke deste evento e ele vai por sua vez chamar a função OnEnemyDeath.
             if (health)
@@ -73,22 +77,20 @@ public class GameManager : MonoBehaviour
     // Vai colocar random positions no spawn. Temos que ajustar mais tarde isto
     Vector3 GetRandomSpawnPosition()
     {
-        /*float planeMinX = -50f;
-        float planeMaxX = 50f;
-        float planeMinZ = -50f;
-        float planeMaxZ = 50f;
+        if (!spawner.transform) return Vector3.zero;
 
-        Vector3 randomPos = new(
-            Random.Range(planeMinX, planeMaxX),
-            10f,
-            Random.Range(planeMinZ, planeMaxZ)
-        );
+        float sqMin = minSpawnDistance * minSpawnDistance;
+        float sqMax = spawnRadius * spawnRadius;
 
-        if (NavMesh.SamplePosition(randomPos, out NavMeshHit hit, 20f, NavMesh.AllAreas))
-        {
+        float r = Mathf.Sqrt(Random.Range(sqMin, sqMax));
+        float ang = Random.Range(0f, Mathf.PI * 2f);
+        Vector3 offset = new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)) * r;
+        Vector3 samplePos = spawner.transform.position + offset;
+
+        if (NavMesh.SamplePosition(samplePos, out NavMeshHit hit, 20f, NavMesh.AllAreas))
             return hit.position;
-        }*/
 
+        Debug.LogError($"GameManager: No NavMesh found within radius {spawnRadius} around spawner.Cannot spawn enemy.");
         return Vector3.zero;
     }
 

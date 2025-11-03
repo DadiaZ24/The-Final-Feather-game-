@@ -35,6 +35,8 @@ public class EnemyAI : MonoBehaviour, IDamageable
     public Slider enemyHealthSlider;
     private Animator animator;
     private GameObject player;
+    public GameObject damagePopupPrefab;
+    public Canvas worldCanvas;
 
     //privates stats
     private float currentHealth;
@@ -93,6 +95,17 @@ public class EnemyAI : MonoBehaviour, IDamageable
         ChasePlayer();
     }
 
+    public void ShowDamage(int damageAmount, Vector3 position)
+    {
+        if (!damagePopupPrefab)
+        {
+            Debug.LogError("DamagaPopup Prefab not assigned!");
+            return;
+        }
+        GameObject popup = Instantiate(damagePopupPrefab, position, Quaternion.identity);
+        popup.GetComponent<DamagePopup>().Setup(damageAmount, Color.red);
+    }
+
     public void TakeDamage(float amount)
     {
         float enemyArmor = enemyStats.GetArmor(GameManager.Instance.currentStage);
@@ -100,6 +113,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
         float realArmor = enemyArmor * (1 - Player.Instance.armorPen);
         float damageTaken = amount * (k / (realArmor + k));
         currentHealth -= damageTaken;
+        ShowDamage((int)damageTaken, transform.position + Vector3.up * 2);
 
         if (enemyHealthSlider != null)
             enemyHealthSlider.value = currentHealth;

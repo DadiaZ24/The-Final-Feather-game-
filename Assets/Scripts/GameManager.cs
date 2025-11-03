@@ -22,8 +22,8 @@ public class GameManager : MonoBehaviour
     public Transform[] spawnPoints;
     public GameObject perkMenuUI;
     public GameObject spawner;
-    [Header("Enemy Points to Gain")]
-    public long defaultEnemy = 2;
+    [Tooltip("The value to change dificulty about the armor reduce damage")]
+    public int k = 20;
 
 
     private List<GameObject> aliveEnemies = new();

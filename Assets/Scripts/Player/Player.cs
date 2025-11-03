@@ -21,12 +21,15 @@ public class Player : MonoBehaviour
     public int maxHealth = 100;
     public float attackDamage = 10f;
     public float armor = 0f;
+    [Tooltip("Não esquecer de utilizar números decimais de 0-1 (%)")]
+    public float armorPen = 0f;
     public float agility = 1.0f;
     private float currentHealth;
     private float currentEnergy;
-    private int healthPotions = 0;
-    private bool hasSparrowQuake = false;
-    private bool hasScream = false;
+    [Header("Habilities")]
+    public PlayerAbilities SparrowQuake;
+    public PlayerAbilities ScreamScript;
+    public PlayerAbilities HealthPotions;
 
     [Header("Regen Settings")]
     public float energyRegenRate = 5f;
@@ -35,7 +38,7 @@ public class Player : MonoBehaviour
 
     // ---[SOUNDS AND ANIMATIONS]---
     [Header("Sound Settings")]
-    public AudioSource SparrowQuakeSoundSource;
+    public AudioClip SparrowQuakeSoundSource;
 
     [Header("VFX Settings")]
     public float attackVfxHeigh = 0.4f;
@@ -196,9 +199,13 @@ public class Player : MonoBehaviour
         UpdateBar();
     }
 
-    public void TakeDamage(float amount)
+    public void TakeDamage(float amount, float enemyArmorPen = 0f)
     {
-        currentHealth -= amount;
+        int k = GameManager.Instance.k;
+        float realArmor = armor * (1 - enemyArmorPen);
+        float damageTaken = amount * (k / (realArmor + k));
+        Debug.Log($"Enemy has taken {damageTaken} to the player");
+        currentHealth -= damageTaken;
         if (currentHealth < 0)
             currentHealth = 0;
     }
@@ -280,8 +287,6 @@ public class Player : MonoBehaviour
             // ensure no residual small values remain
             moveVelocity = Vector3.zero;
         }
-
-        Debug.Log(movementAnimationSpeed);
 
         float blendTreeTarget = 0f;
         if (inputDir.magnitude >= 0.01f)
@@ -394,6 +399,7 @@ public class Player : MonoBehaviour
                 // Exemplo: em vez de ter var dmg = hit.GetComponentInParent<EnemyHealthSystem>(); hit.GetComponentInParent<DoorHealthSystem>();
                 // Só tenho hit.GetComponentInParent<IDamageable>();
                 var dmg = hit.GetComponentInParent<IDamageable>();
+                Debug.Log("Dealing Damage");
                 dmg?.TakeDamage(attackDamage);
 
                 Vector3 rawDir = hit.transform.position - transform.position;
@@ -419,16 +425,18 @@ public class Player : MonoBehaviour
 
     void HandleAbilities()
     {
-        if (Input.GetKeyDown(KeyCode.Q) && GetCurrentEnergy() >= 50)
+        if (Input.GetKeyDown(KeyCode.Q) && SparrowQuake.IsReady() && GetCurrentEnergy() >= SparrowQuake.energyConsumption)
         {
-            UseEnergy(50);
+            SparrowQuake.Use();
+            UseEnergy(SparrowQuake.energyConsumption);
             verticalVelocity = Mathf.Sqrt(2f * jumpHeight * -Physics.gravity.y);
             animator.SetBool("SmashUp", true);
             StartCoroutine(SmashMake());
         }
-        if (Input.GetKeyDown(KeyCode.E) && GetCurrentEnergy() >= 50)
+        if (Input.GetKeyDown(KeyCode.E) && ScreamScript.IsReady() && GetCurrentEnergy() >= ScreamScript.energyConsumption)
         {
-            UseEnergy(50);
+            ScreamScript.Use();
+            UseEnergy(ScreamScript.energyConsumption);
             animator.SetBool("Scream", true);
             StartCoroutine(ScreamMake());
         }
@@ -456,7 +464,8 @@ public class Player : MonoBehaviour
             Vector3 spawnPos = transform.position + Vector3.down * 0.4f;
             Instantiate(Smash1, transform.position, transform.rotation);
             Instantiate(Smash2, transform.position, transform.rotation);
-            AudioManager.Instance.PlaySFX(SparrowQuakeSoundSource.clip);
+            AudioManager.Instance.PlaySFX(SparrowQuakeSoundSource);
+            StartCoroutine(DelayedSmashKnockback(SparrowQuake.knockbackDelay, transform.position, SparrowQuake.knockbackRadius, knockbackForce * SparrowQuake.knockbackForceMultiplier, enemyLayer, QueryTriggerInteraction.Ignore));
         }
     }
 
@@ -508,6 +517,13 @@ public class Player : MonoBehaviour
         animator.SetBool("Scream", false);
     }
 
+    private IEnumerator DelayedSmashKnockback(float delay, Vector3 origin, float radius, float force, LayerMask layer, QueryTriggerInteraction query)
+    {
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+        EnemyAI.KnockbackEnemiesInRadius(origin, radius, force, layer, query);
+    }
+
     IEnumerator Death()
     {
         verticalVelocity = Mathf.Sqrt(1.2f * jumpHeight * -Physics.gravity.y);
@@ -538,7 +554,6 @@ public class Player : MonoBehaviour
 
         if (info.IsName("SmashDown"))
         {
-            Debug.Log(isAlmostGrounded);
             if (!isAlmostGrounded)
                 animator.speed = 0.1f;
 

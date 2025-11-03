@@ -41,7 +41,6 @@ public class Scoreboard : MonoBehaviour
 
     public void OnReloadGame()
     {
-        Debug.Log("CLICKED!!!");
         MainMenu.Instance.PlayGame();
     }
 

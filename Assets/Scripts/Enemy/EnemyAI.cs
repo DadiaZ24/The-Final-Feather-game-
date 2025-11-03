@@ -29,20 +29,14 @@ public interface IDamageable
 public class EnemyAI : MonoBehaviour, IDamageable
 {
     [Header("References")]
+    public EnemyStats enemyStats;
     public GameObject enemy;
     private NavMeshAgent agent;
     public Slider enemyHealthSlider;
     private Animator animator;
     private GameObject player;
 
-    [Header("Stats")]
-    public int maxHealth = 100;
-    public float attackDamage = 6f;
-    public float armor = 5f;
-    public float agility = 1f;
-    public float attackRange = 2f;
-    public float attackCooldown = 1f;
-    //privates
+    //privates stats
     private float currentHealth;
     private float lastAttackTime = 0f;
     private bool isAttacking = false;
@@ -66,10 +60,10 @@ public class EnemyAI : MonoBehaviour, IDamageable
             Debug.LogError("No enemyHealthSlider!");
             return;
         }
-        currentHealth = maxHealth;
+        currentHealth = enemyStats.GetHealth(GameManager.Instance.currentStage);
         if (enemyHealthSlider != null)
         {
-            enemyHealthSlider.maxValue = maxHealth;
+            enemyHealthSlider.maxValue = enemyStats.GetHealth(GameManager.Instance.currentStage);
             enemyHealthSlider.value = currentHealth;
         }
 
@@ -101,7 +95,11 @@ public class EnemyAI : MonoBehaviour, IDamageable
 
     public void TakeDamage(float amount)
     {
-        currentHealth -= amount;
+        float enemyArmor = enemyStats.GetArmor(GameManager.Instance.currentStage);
+        int k = GameManager.Instance.k;
+        float realArmor = enemyArmor * (1 - Player.Instance.armorPen);
+        float damageTaken = amount * (k / (realArmor + k));
+        currentHealth -= damageTaken;
 
         if (enemyHealthSlider != null)
             enemyHealthSlider.value = currentHealth;
@@ -119,7 +117,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
         Destroy(enemy);
         // Scoring singleton might not be initialized in some execution orders (editor tests, scenes without scoring)
         // Guard call to avoid NullReferenceException
-        scoringSystem.AddScore(GameManager.Instance.defaultEnemy);
+        scoringSystem.AddScore(enemyStats.scorePerKill);
     }
 
     void ChasePlayer()
@@ -127,7 +125,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
         // Calcula a distancia entre player e inimigo
         float distance = Vector3.Distance(transform.position, player.transform.position);
 
-        if (distance > attackRange)
+        if (distance > enemyStats.attackRange)
         {
             // Se a distancia é maior do que o attackRange, obviamente que vamos dar chase
             if (agent != null && agent.isOnNavMesh)
@@ -158,7 +156,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
     void TryAttack()
     {
         // Vamos criar um pequeno cooldown para ele não estar sempre a atacar?
-        if (Time.time - lastAttackTime < attackCooldown)
+        if (Time.time - lastAttackTime < enemyStats.attackCooldown)
             return;
 
         lastAttackTime = Time.time;
@@ -175,8 +173,8 @@ public class EnemyAI : MonoBehaviour, IDamageable
 
         // Voltar a calcular distancia para verificar se levamos dano
         float distance = Vector3.Distance(transform.position, player.transform.position);
-        if (distance <= attackRange)
-            Player.Instance.TakeDamage(attackDamage);
+        if (distance <= enemyStats.attackRange)
+            Player.Instance.TakeDamage(enemyStats.GetDamage(GameManager.Instance.currentStage));
     }
 
     // É chamado pelo Animation Event quando atinge o exato frame que escolhemos para isso.
@@ -196,8 +194,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
         {
             // Try to place the agent onto the NavMesh near current position, then set destination
             agent.enabled = true;
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(transform.position, out hit, 1.5f, NavMesh.AllAreas))
+            if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 1.5f, NavMesh.AllAreas))
             {
                 agent.Warp(hit.position);
                 agent.isStopped = false;
@@ -310,13 +307,10 @@ public class EnemyAI : MonoBehaviour, IDamageable
         // Re-enable NavMeshAgent safely
         if (agent != null)
         {
-            Vector3 pos = transform.position;
-            Quaternion rot = transform.rotation;
-
+            transform.GetPositionAndRotation(out Vector3 pos, out Quaternion rot);
             agent.enabled = true;
             // Try to place agent on NavMesh near current position
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(pos, out hit, 1.5f, NavMesh.AllAreas))
+            if (NavMesh.SamplePosition(pos, out NavMeshHit hit, 1.5f, NavMesh.AllAreas))
             {
                 agent.Warp(hit.position);
                 agent.isStopped = false;
@@ -402,9 +396,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
         // Re-enable NavMeshAgent safely
         if (agent != null)
         {
-            Vector3 pos = transform.position;
-            Quaternion rot = transform.rotation;
-
+            transform.GetPositionAndRotation(out Vector3 pos, out Quaternion rot);
             agent.enabled = true;
             agent.Warp(pos);
             agent.isStopped = false;
@@ -415,5 +407,59 @@ public class EnemyAI : MonoBehaviour, IDamageable
         }
 
         knockbackCoroutine = null;
+    }
+
+    public static void KnockbackEnemiesInRadius(Vector3 origin, float radius, float force, LayerMask layerMask, QueryTriggerInteraction query = QueryTriggerInteraction.Ignore)
+    {
+        Collider[] hits = Physics.OverlapSphere(origin, radius, layerMask, query);
+
+        if (hits == null || hits.Length == 0)
+            return;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider c = hits[i];
+            if (!c) continue;
+            EnemyAI ai = c.GetComponentInParent<EnemyAI>();
+            if (ai == null) continue;
+
+            Vector3 dir = ai.transform.position - origin;
+            dir.y = 0f;
+            if (dir.sqrMagnitude == 0f)
+                dir = ai.transform.forward;
+            dir.Normalize();
+
+            ai.ApplyKnockback(dir, force);
+        }
+    }
+    public static void KnockbackEnemiesInCone(Vector3 origin, Vector3 forwardDirection, float radius, float coneAngle, float force)
+    {
+        if (forwardDirection.sqrMagnitude == 0f)
+            forwardDirection = Vector3.forward;
+        forwardDirection.y = 0f;
+        forwardDirection.Normalize();
+
+        Collider[] hits = Physics.OverlapSphere(origin, radius);
+        float halfAngle = coneAngle * 0.5f;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider c = hits[i];
+            if (!c) continue;
+            EnemyAI ai = c.GetComponentInParent<EnemyAI>();
+            if (ai == null) continue;
+
+            Vector3 toTarget = ai.transform.position - origin;
+            toTarget.y = 0f;
+            if (toTarget.sqrMagnitude == 0f)
+                continue;
+
+            float angleTo = Vector3.Angle(forwardDirection, toTarget.normalized);
+            if (angleTo <= halfAngle)
+            {
+                Vector3 dir = toTarget.normalized;
+                ai.ApplyKnockback(dir, force);
+            }
+        }
     }
 }

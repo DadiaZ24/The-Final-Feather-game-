@@ -65,7 +65,6 @@ public class FirebaseManager : MonoBehaviour
         string json = JsonUtility.ToJson(newScore);
 
         db.Child("scores").Child(key).SetRawJsonValueAsync(json);
-        Debug.Log($"Score enviado: {newScore.username} - {newScore.score}");
     }
 
     public void GetScores(System.Action<List<PlayerScore>> callback)

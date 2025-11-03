@@ -1758,12 +1758,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34e935d35c6473d4cbdf7f59c6592407, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
+  enemyStats: {fileID: 11400000, guid: 3a4b5abad5cd4ac43bac948f07bb3ff4, type: 2}
   enemy: {fileID: 5310191315388989799}
   enemyHealthSlider: {fileID: 3742175444150428009}
-  attackRange: 2
-  attackCooldown: 1
-  attackDamage: 6
-  maxHealth: 100
   knockbackDuration: 0.18
   knockbackVelocityFactor: 5
   forceNavMeshKnockback: 1

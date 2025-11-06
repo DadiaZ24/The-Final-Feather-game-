@@ -2,20 +2,44 @@ using Unity.VisualScripting;
 using UnityEngine;
 using System.Collections;
 using System;
+using static SliderBar;
 
-
-[RequireComponent(typeof(StatsSystem))]
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(Animator))]
 public class Player : MonoBehaviour
 {
+    // ---[WAIT FOR SECONDS VARIABLES]---
     private static readonly WaitForSeconds _waitForSeconds0_6 = new(0.6f);
     private static readonly WaitForSeconds _waitForSeconds0_2 = new(0.2f);
-
     private static readonly WaitForSeconds _waitForSeconds2 = new(2f);
-    [Header("Sound Settings")]
-    public AudioSource SparrowQuakeSoundSource;
     private static readonly WaitForSeconds _waitForSeconds0_5 = new(0.2f);
+    //-------------------------------------------------
+
+    // ---[STATS SYSTEM]---
+    [Header("Base Stats Settings")]
+    public int maxEnergy = 100;
+    public int maxHealth = 100;
+    public float attackDamage = 10f;
+    public float armor = 0f;
+    [Tooltip("Não esquecer de utilizar números decimais de 0-1 (%)")]
+    public float armorPen = 0f;
+    public float agility = 1.0f;
+    private float currentHealth;
+    private float currentEnergy;
+    [Header("Habilities")]
+    public PlayerAbilities SparrowQuake;
+    public PlayerAbilities ScreamScript;
+    public PlayerAbilities HealthPotions;
+
+    [Header("Regen Settings")]
+    public float energyRegenRate = 5f;
+    private SliderBar playerSliderBar;
+    //----------------------------------------
+
+    // ---[SOUNDS AND ANIMATIONS]---
+    [Header("Sound Settings")]
+    public AudioClip SparrowQuakeSoundSource;
+
     [Header("VFX Settings")]
     public float attackVfxHeigh = 0.4f;
 
@@ -26,26 +50,29 @@ public class Player : MonoBehaviour
     public GameObject Scream;
     public GameObject Heal;
 
+    //Animations
+    private Animator animator;
+    private float movementAnimationSpeed;
+    //----------------------------------------
+
+    // ---[CAMERA SETTINGS]---
     [Header("View Settings")]
-    public Camera firstPersonCamera;
-    public Camera thirdPersonCamera;
+    public Camera playerCamera;
     public float mouseSensitivity = 2f;
     public float horizontalRotation = 0f;
     public float verticalRotation = 0f;
+    //-----------------------------------------
 
-    private bool isFirstPerson = true;
-
+    // ---[MOVEMENT SETTINGS]
     [Header("Movement Settings")]
-    private CharacterController characterController;
-
+    [SerializeField] private float almostGroundedDistance = 0.25f;
     private float walkSpeed = 2f;
     private float runSpeed = 5f;
     private float acceleration = 3.0f;
-
+    private CharacterController characterController;
     private float verticalVelocity;
     private bool isGrounded;
     private bool isAlmostGrounded;
-    [SerializeField] private float almostGroundedDistance = 0.25f;
     private float jumpHeight = 1.5f;
     private Vector3 moveVelocity = Vector3.zero;
 
@@ -57,28 +84,22 @@ public class Player : MonoBehaviour
     private Vector3 dashDirection;
     private float dashStep;
     private float dashDistanceMoved;
-    private StatsSystem statSystem;
+    //-----------------------------------------------------------
 
-
-
-    //Animations
-    private float horizontalAnimVelocity = 0.0f;
-    private float verticalAnimVelocity = 0.0f;
-    private Animator animator;
-
+    // ---[ATTACK ENEMY SETTINGS]---
     [Header("Attack Settings")]
     [SerializeField] private float attackRange = 2f;
     [SerializeField] private float attackRadius = 0.6f;
-    [SerializeField] private float attackDamage = 20f;
     [SerializeField] private LayerMask enemyLayer;
-    public static Player Instance;
-
+    public float attackCooldown = 0.5f;
+    public float knockbackForce = 4f;
+    private bool canAttack = true;
     private bool isDead = false;
     public bool IsDead => isDead;
-
     public static Action OnPlayerDied;
-
+    //-----------------------------------------------------
     private bool savedScore;
+    public static Player Instance;
 
     void Awake()
     {
@@ -94,26 +115,24 @@ public class Player : MonoBehaviour
         animator = GetComponent<Animator>();
         characterController = GetComponentInChildren<CharacterController>();
 
-        SetCamera(true);
-
-        statSystem = GetComponent<StatsSystem>();
-
-        if (statSystem == null)
-            Debug.LogError("StatsSystem not found on Player!");
+        currentEnergy = maxEnergy;
+        currentHealth = maxHealth;
+        playerSliderBar = GetComponentInChildren<SliderBar>();
+        if (playerSliderBar == null)
+        {
+            Debug.LogError("playerSliderBar is null");
+            return;
+        }
+        UpdateBar();
     }
 
     void Update()
     {
         animator.speed = 1f;
 
-        if (isDead)
-        {
-            ApplyGravity();
-            Vector3 finalMoveDead = (moveVelocity + Vector3.up * verticalVelocity) * Time.deltaTime;
-            if (characterController != null)
-                characterController.Move(finalMoveDead);
+        if (DeadControl())
             return;
-        }
+
         HandleLook();
         HandleMovement();
         HandleJump();
@@ -121,16 +140,98 @@ public class Player : MonoBehaviour
         ApplyGravity();
         HandleAbilities();
         HandleAttack();
-        HandleCameraToggle();
-        HandleAnimation();
         OnDeath();
         SmashDownWait();
+        RegenerateEnergyUpdate();
+        UpdatePlayerSpeed();
 
         // apply all movement (horizontal + vertical) once per frame
         Vector3 finalMove = (moveVelocity + Vector3.up * verticalVelocity) * Time.deltaTime;
         if (characterController != null)
             characterController.Move(finalMove);
     }
+
+    // ------- [STATS SYSTEM METHODS] ------------------------------------------------------
+
+    private void RegenerateEnergyUpdate()
+    {
+        if (currentEnergy < maxEnergy)
+        {
+            currentEnergy += energyRegenRate * Time.deltaTime;
+            if (currentEnergy > maxEnergy)
+                currentEnergy = maxEnergy;
+        }
+        UpdateBar();
+    }
+
+    public float GetCurrentEnergy()
+    {
+        return currentEnergy;
+    }
+
+    public bool UseEnergy(int amount)
+    {
+        if (currentEnergy >= amount)
+        {
+            currentEnergy -= amount;
+            return true;
+        }
+        else
+        {
+            Debug.Log("Not enough energy");
+            return false;
+        }
+    }
+
+    public float GetCurrentHealth()
+    {
+        return currentHealth;
+    }
+
+    public void RegenerateHealth(float ammount)
+    {
+        if (currentHealth < maxHealth)
+        {
+            currentHealth += ammount;
+            if (currentHealth > maxHealth)
+                currentHealth = maxHealth;
+        }
+        UpdateBar();
+    }
+
+    public void TakeDamage(float amount, float enemyArmorPen = 0f)
+    {
+        int k = GameManager.Instance.k;
+        float realArmor = armor * (1 - enemyArmorPen);
+        float damageTaken = amount * (k / (realArmor + k));
+        Debug.Log($"Enemy has taken {damageTaken} to the player");
+        currentHealth -= damageTaken;
+        if (currentHealth < 0)
+            currentHealth = 0;
+    }
+
+    void UpdatePlayerSpeed()
+    {
+        runSpeed *= agility;
+    }
+
+    private void UpdateBar()
+    {
+        if (playerSliderBar != null)
+        {
+            playerSliderBar.SetValue(SliderBarEnum.Energy, currentEnergy, maxEnergy);
+            playerSliderBar.SetValue(SliderBarEnum.Health, currentHealth, maxHealth);
+        }
+        else
+        {
+            Debug.LogWarning("playerSliderBar is null!");
+        }
+    }
+
+    // -----------------------------------------------------------------------------------
+
+    // ------- [CAMERA AND VIEW SETTINGS] ------------------------------------------------------
+
     void HandleLook()
     {
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
@@ -139,41 +240,11 @@ public class Player : MonoBehaviour
         verticalRotation -= mouseY;
         verticalRotation = Mathf.Clamp(verticalRotation, -90f, 90f);
         horizontalRotation += mouseX;
-
-        if (isFirstPerson)
-        {
-            // FPS style: body rotates on Y, camera rotates up/down
-            firstPersonCamera.transform.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
-            transform.rotation = Quaternion.Euler(0f, horizontalRotation, 0f);
-        }
     }
 
-    void HandleCameraToggle()
-    {
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            isFirstPerson = !isFirstPerson;
-            SetCamera(isFirstPerson);
-        }
-    }
+    // ------------------------------------------------------------------------------------------
 
-    void SetCamera(bool firstPerson)
-    {
-        firstPersonCamera.gameObject.SetActive(firstPerson);
-        thirdPersonCamera.gameObject.SetActive(!firstPerson);
-    }
-
-    void HandleView()
-    {
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
-
-        horizontalRotation += mouseX;
-        verticalRotation -= mouseY;
-        verticalRotation = Mathf.Clamp(verticalRotation, -90f, 90f);
-
-        transform.localRotation = Quaternion.Euler(verticalRotation, horizontalRotation, 0f);
-    }
+    // ------- [MOVEMENT AND PHYSICS SETTINGS] ------------------------------------------------------
 
     void HandleMovement()
     {
@@ -185,30 +256,25 @@ public class Player : MonoBehaviour
 
         // Velocidade base
         float currentSpeed = walkSpeed;
-        if (Input.GetKey(KeyCode.LeftShift)) currentSpeed = runSpeed;
-
-        // Pega a câmera ativa
-        Transform camTransform = isFirstPerson ? firstPersonCamera.transform : thirdPersonCamera.transform;
+        bool isRunning = Input.GetKey(KeyCode.LeftShift);
+        if (isRunning) currentSpeed = runSpeed;
 
         // Direções da câmera (apenas no plano XZ)
-        Vector3 camForward = camTransform.forward;
+        Vector3 camForward = playerCamera.transform.forward;
         camForward.y = 0f;
         camForward.Normalize();
 
-        Vector3 camRight = camTransform.right;
+        Vector3 camRight = playerCamera.transform.right;
         camRight.y = 0f;
         camRight.Normalize();
 
         // Direção de movimento relativa à câmera
-        Vector3 moveDir = (camForward * inputDir.z + camRight * inputDir.x);
+        Vector3 moveDir = camForward * inputDir.z + camRight * inputDir.x;
         if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
 
         // O player SEMPRE olha pra frente da câmera (horizontalmente)
-        if (!isFirstPerson && moveDir.sqrMagnitude > 0.01f)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(camForward);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
-        }
+        Quaternion targetRotation = Quaternion.LookRotation(camForward);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
 
         // set horizontal velocity (do NOT call Move here)
         // Immediate stop when input is released: if magnitude is very small, snap to zero
@@ -221,6 +287,15 @@ public class Player : MonoBehaviour
             // ensure no residual small values remain
             moveVelocity = Vector3.zero;
         }
+
+        float blendTreeTarget = 0f;
+        if (inputDir.magnitude >= 0.01f)
+            blendTreeTarget = isRunning ? 2f : 1f;
+
+        movementAnimationSpeed = Mathf.MoveTowards(movementAnimationSpeed, blendTreeTarget, acceleration * Time.deltaTime);
+
+        if (animator != null)
+            animator.SetFloat("State", movementAnimationSpeed);
     }
 
     void ApplyGravity()
@@ -273,11 +348,11 @@ public class Player : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.V) && !isDashing && statSystem.GetCurrentEnergy() >= 25)
+        if (Input.GetKeyDown(KeyCode.V) && !isDashing && GetCurrentEnergy() >= 25)
         {
             animator.SetBool("Dashing", true);
             dashDirection = transform.forward;
-            statSystem.UseEnergy(25);
+            UseEnergy(25);
             isDashing = true;
             dashTimer = 0f;
             dashDistanceMoved = 0f;
@@ -286,22 +361,26 @@ public class Player : MonoBehaviour
 
     void HandleAttack()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (isDead) return;
+
+        if (Input.GetMouseButtonDown(0) && canAttack)
         {
+            canAttack = false;
+            StartCoroutine(ResetAttackCooldown());
             // trigger animation
             if (animator != null)
                 animator.SetBool("Punching", true);
 
             // origin & direction
-            Vector3 origin = isFirstPerson ? firstPersonCamera.transform.position : transform.position + Vector3.up * 1.0f;
-            Vector3 dir = isFirstPerson ? firstPersonCamera.transform.forward : transform.forward;
+            Vector3 origin = transform.position + Vector3.up * 1.0f;
+            Vector3 dir = transform.forward;
 
             // com isto, permite-nos atingir vários inimigos duma vez só. Queremos manter???
             Vector3 center = origin + dir * (attackRange * 0.5f);
             Collider[] hits = new Collider[10];
             // Aqui criamos uma esfera em que os inimigos dentro dessa esfera vão levar dano.
             int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, hits, enemyLayer, QueryTriggerInteraction.Ignore);
-            Vector3 vfxPos = new Vector3(transform.position.x, transform.position.y + attackVfxHeigh, transform.position.z);
+            Vector3 vfxPos = new(transform.position.x, transform.position.y + attackVfxHeigh, transform.position.z);
             // Instantiate the VFX prefab and destroy the spawned instance when its particle system finishes.
             if (Attack != null)
             {
@@ -320,7 +399,17 @@ public class Player : MonoBehaviour
                 // Exemplo: em vez de ter var dmg = hit.GetComponentInParent<EnemyHealthSystem>(); hit.GetComponentInParent<DoorHealthSystem>();
                 // Só tenho hit.GetComponentInParent<IDamageable>();
                 var dmg = hit.GetComponentInParent<IDamageable>();
+                Debug.Log("Dealing Damage");
                 dmg?.TakeDamage(attackDamage);
+
+                Vector3 rawDir = hit.transform.position - transform.position;
+                rawDir.y = 0f;
+                if (rawDir.sqrMagnitude == 0f) rawDir = transform.forward;
+                Vector3 knocbackDir = rawDir.normalized;
+
+                var enemy = hit.GetComponentInParent<EnemyAI>();
+                if (enemy)
+                    enemy.ApplyKnockback(knocbackDir, knockbackForce);
             }
 
             // Se só quisermos dar dano a um inimigo, temos esta forma
@@ -330,24 +419,64 @@ public class Player : MonoBehaviour
                 if (dmg != null) dmg.TakeDamage(attackDamage);
             }*/
         }
+        else if (animator.GetBool("Punching") == true)
+            animator.SetBool("Punching", false);
     }
 
     void HandleAbilities()
     {
-        if (Input.GetKeyDown(KeyCode.Q) && statSystem.GetCurrentEnergy() >= 50)
+        if (Input.GetKeyDown(KeyCode.Q) && SparrowQuake.IsReady() && GetCurrentEnergy() >= SparrowQuake.energyConsumption)
         {
-            statSystem.UseEnergy(50);
+            SparrowQuake.Use();
+            UseEnergy(SparrowQuake.energyConsumption);
             verticalVelocity = Mathf.Sqrt(2f * jumpHeight * -Physics.gravity.y);
             animator.SetBool("SmashUp", true);
             StartCoroutine(SmashMake());
         }
-        if (Input.GetKeyDown(KeyCode.E) && statSystem.GetCurrentEnergy() >= 50)
+        if (Input.GetKeyDown(KeyCode.E) && ScreamScript.IsReady() && GetCurrentEnergy() >= ScreamScript.energyConsumption)
         {
-            statSystem.UseEnergy(50);
+            ScreamScript.Use();
+            UseEnergy(ScreamScript.energyConsumption);
             animator.SetBool("Scream", true);
             StartCoroutine(ScreamMake());
         }
     }
+
+    // ---------------------------------------------------------------------------------------------
+
+    // ------- [EVENTS] ------------------------------------------------------
+
+    void OnDeath()
+    {
+        if (GetCurrentHealth() <= 0f && !isDead)
+        {
+            isDead = true;
+            // notify subscribers (enemies etc.)
+            OnPlayerDied?.Invoke();
+            StartCoroutine(Death());
+        }
+    }
+
+    public void OnSitEnd()
+    {
+        if (Smash1 != null && Smash2 != null)
+        {
+            Vector3 spawnPos = transform.position + Vector3.down * 0.4f;
+            Instantiate(Smash1, transform.position, transform.rotation);
+            Instantiate(Smash2, transform.position, transform.rotation);
+            AudioManager.Instance.PlaySFX(SparrowQuakeSoundSource);
+            StartCoroutine(DelayedSmashKnockback(SparrowQuake.knockbackDelay, transform.position, SparrowQuake.knockbackRadius, knockbackForce * SparrowQuake.knockbackForceMultiplier, enemyLayer, QueryTriggerInteraction.Ignore));
+        }
+    }
+
+    public void OnScream()
+    {
+        Quaternion spawnRotation = transform.rotation * Quaternion.Euler(90, 180, 0);
+        Vector3 spawnPos = new(transform.position.x, transform.position.y + 0.6f, transform.position.z);
+        Instantiate(Scream, spawnPos, spawnRotation);
+    }
+
+    // ------- [COROUTINES] ------------------------------------------------------
 
     // Destroy a spawned VFX GameObject when its ParticleSystem (if any) has finished playing.
     // Falls back to a short timed destroy if there's no ParticleSystem.
@@ -376,6 +505,7 @@ public class Player : MonoBehaviour
         // Destroy the spawned instance when done.
         Destroy(obj);
     }
+
     IEnumerator SmashMake()
     {
         yield return _waitForSeconds0_6; // wait x second
@@ -387,82 +517,11 @@ public class Player : MonoBehaviour
         animator.SetBool("Scream", false);
     }
 
-    void HandleAnimation()
+    private IEnumerator DelayedSmashKnockback(float delay, Vector3 origin, float radius, float force, LayerMask layer, QueryTriggerInteraction query)
     {
-        if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 0.7f && animator.GetCurrentAnimatorStateInfo(0).IsName("Punching"))
-            animator.SetBool("Punching", false);
-        if (Input.GetKey(KeyCode.W))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity < 2)
-                verticalAnimVelocity += Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity < 1)
-                verticalAnimVelocity += Time.deltaTime * acceleration;
-            if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity >= 1)
-                verticalAnimVelocity -= Time.deltaTime * acceleration;
-
-            animator.SetFloat("Vertical", verticalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.W) && verticalAnimVelocity > 0)
-        {
-            verticalAnimVelocity -= Time.deltaTime * acceleration;
-            animator.SetFloat("Vertical", verticalAnimVelocity);
-
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity < 2)
-                horizontalAnimVelocity += Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity < 1)
-                horizontalAnimVelocity += Time.deltaTime * acceleration;
-
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.D) && horizontalAnimVelocity > 0)
-        {
-            horizontalAnimVelocity -= Time.deltaTime * acceleration;
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
-
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity > -2)
-                verticalAnimVelocity -= Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && verticalAnimVelocity > -1)
-                verticalAnimVelocity -= Time.deltaTime * acceleration;
-
-            animator.SetFloat("Vertical", verticalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.S) && verticalAnimVelocity < 0)
-        {
-            verticalAnimVelocity += Time.deltaTime * acceleration;
-            animator.SetFloat("Vertical", verticalAnimVelocity);
-
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            if (Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity > -2)
-                horizontalAnimVelocity -= Time.deltaTime * acceleration;
-            else if (!Input.GetKey(KeyCode.LeftShift) && horizontalAnimVelocity > -1)
-                horizontalAnimVelocity -= Time.deltaTime * acceleration;
-
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
-        }
-        else if (!Input.GetKey(KeyCode.A) && horizontalAnimVelocity < 0)
-        {
-            horizontalAnimVelocity += Time.deltaTime * acceleration;
-            animator.SetFloat("Horizontal", horizontalAnimVelocity);
-        }
-    }
-
-    void OnDeath()
-    {
-        if (statSystem.GetCurrentHealth() <= 0f && !isDead)
-        {
-            isDead = true;
-            // notify subscribers (enemies etc.)
-            OnPlayerDied?.Invoke();
-            StartCoroutine(Death());
-        }
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+        EnemyAI.KnockbackEnemiesInRadius(origin, radius, force, layer, query);
     }
 
     IEnumerator Death()
@@ -480,16 +539,14 @@ public class Player : MonoBehaviour
         GameManager.Instance.FinishGame();
     }
 
-    public void OnSitEnd()
+    IEnumerator ResetAttackCooldown()
     {
-        if (Smash1 != null && Smash2 != null)
-        {
-            Vector3 spawnPos = transform.position + Vector3.down * 0.4f;
-            Instantiate(Smash1, transform.position, transform.rotation);
-            Instantiate(Smash2, transform.position, transform.rotation);
-            AudioManager.Instance.PlaySFX(SparrowQuakeSoundSource.clip);
-        }
+        yield return new WaitForSeconds(attackCooldown);
+        canAttack = true;
     }
+
+    // -----------------------------------------------------------------------------------------------
+
 
     public void SmashDownWait()
     {
@@ -497,7 +554,6 @@ public class Player : MonoBehaviour
 
         if (info.IsName("SmashDown"))
         {
-            Debug.Log(isAlmostGrounded);
             if (!isAlmostGrounded)
                 animator.speed = 0.1f;
 
@@ -506,11 +562,17 @@ public class Player : MonoBehaviour
         }
     }
 
-    public void OnScream()
+    private bool DeadControl()
     {
-        Quaternion spawnRotation = transform.rotation * Quaternion.Euler(90, 180, 0);
-        Vector3 spawnPos = new(transform.position.x, transform.position.y + 0.6f, transform.position.z);
-        Instantiate(Scream, spawnPos, spawnRotation);
+        if (isDead)
+        {
+            ApplyGravity();
+            Vector3 finalMoveDead = (moveVelocity + Vector3.up * verticalVelocity) * Time.deltaTime;
+            if (characterController != null)
+                characterController.Move(finalMoveDead);
+            return true;
+        }
+        return false;
     }
 
 }

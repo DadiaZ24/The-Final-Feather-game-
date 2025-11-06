@@ -15,7 +15,7 @@ public class Scoring : MonoBehaviour
 		return score;
 	}
 
-	public void AddScore(int nbr)
+	public void AddScore(long nbr)
 	{
 		score += nbr;
 		InfoUI.Instance.UpdateScore(score);

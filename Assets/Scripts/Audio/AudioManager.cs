@@ -46,6 +46,7 @@ public class AudioManager : MonoBehaviour
         if (!clip) return;
 
         sfxSource.PlayOneShot(clip);
+        Debug.Log("Played SFX Sound");
     }
 
     public void StopMusic()

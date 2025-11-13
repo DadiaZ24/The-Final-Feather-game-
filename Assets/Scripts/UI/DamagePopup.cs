@@ -33,8 +33,9 @@ public class DamagePopup : MonoBehaviour
     }
 
     public void Setup(int damage, Color color)
-    {
-        textMesh.text = damage.ToString();
+	{
+		textMesh.text = Player.Instance.attackDamage.ToString();
+       	// textMesh.text = damage.ToString();
         textMesh.color = color;
         textColor = color;
     }

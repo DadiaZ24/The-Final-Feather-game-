@@ -12,7 +12,7 @@ public class Player : MonoBehaviour
     private static readonly WaitForSeconds _waitForSeconds0_6 = new(0.6f);
     private static readonly WaitForSeconds _waitForSeconds0_2 = new(0.2f);
     private static readonly WaitForSeconds _waitForSeconds2 = new(2f);
-    private static readonly WaitForSeconds _waitForSeconds0_5 = new(0.2f);
+	private static readonly WaitForSeconds _waitForSeconds0_5 = new(0.2f);
     //-------------------------------------------------
 
     // ---[STATS SYSTEM]---
@@ -379,7 +379,9 @@ public class Player : MonoBehaviour
             Vector3 center = origin + dir * (attackRange * 0.5f);
             Collider[] hits = new Collider[10];
             // Aqui criamos uma esfera em que os inimigos dentro dessa esfera vão levar dano.
-            int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, hits, enemyLayer, QueryTriggerInteraction.Ignore);
+            // Use LayerMask.value to make sure we pass an int layer mask to the physics call.
+            int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, hits, enemyLayer.value, QueryTriggerInteraction.Ignore);
+            Debug.Log($"Attack sphere check: center={center}, radius={attackRadius}, hitCount={hitCount}");
             Vector3 vfxPos = new(transform.position.x, transform.position.y + attackVfxHeigh, transform.position.z);
             // Instantiate the VFX prefab and destroy the spawned instance when its particle system finishes.
             if (Attack != null)
@@ -392,6 +394,8 @@ public class Player : MonoBehaviour
             {
                 // Vamos buscar o collider atual e o sistema de vida do inimigo.
                 var hit = hits[i];
+                if (hit == null) continue;
+                Debug.Log($"Hit collider: {hit.name}");
                 // Implementação de Interfaces vai-nos permitir verificar se existe algum componente que seja damageable.
                 // Isto é, eu posso ter um inimigo que perde vida, e então vai estar esse método em EnemyHealthSystem.
                 // No entanto, eu posso querer dar dano a uma porta e ter esse método no DoorHealthSystem.
@@ -399,17 +403,34 @@ public class Player : MonoBehaviour
                 // Exemplo: em vez de ter var dmg = hit.GetComponentInParent<EnemyHealthSystem>(); hit.GetComponentInParent<DoorHealthSystem>();
                 // Só tenho hit.GetComponentInParent<IDamageable>();
                 var dmg = hit.GetComponentInParent<IDamageable>();
-                Debug.Log("Dealing Damage");
-                dmg?.TakeDamage(attackDamage);
+                if (dmg != null)
+                {
+                    Debug.Log($"Dealing {attackDamage} damage to {hit.name} via IDamageable");
+                    dmg.TakeDamage(attackDamage);
+                }
+                else
+                {
+                    // Fallback: try direct EnemyAI component if present (helps when interface isn't attached where expected)
+                    var enemy = hit.GetComponentInParent<EnemyAI>();
+                    if (enemy != null)
+                    {
+                        Debug.Log($"Dealing {attackDamage} damage to {hit.name} via EnemyAI.TakeDamage fallback");
+                        enemy.TakeDamage(attackDamage);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"No IDamageable or EnemyAI found on hit '{hit.name}'");
+                    }
+                }
 
                 Vector3 rawDir = hit.transform.position - transform.position;
                 rawDir.y = 0f;
                 if (rawDir.sqrMagnitude == 0f) rawDir = transform.forward;
                 Vector3 knocbackDir = rawDir.normalized;
 
-                var enemy = hit.GetComponentInParent<EnemyAI>();
-                if (enemy)
-                    enemy.ApplyKnockback(knocbackDir, knockbackForce);
+                var enemyForKnock = hit.GetComponentInParent<EnemyAI>();
+                if (enemyForKnock)
+                    enemyForKnock.ApplyKnockback(knocbackDir, knockbackForce);
             }
 
             // Se só quisermos dar dano a um inimigo, temos esta forma
@@ -462,10 +483,15 @@ public class Player : MonoBehaviour
         if (Smash1 != null && Smash2 != null)
         {
             Vector3 spawnPos = transform.position + Vector3.down * 0.4f;
-            Instantiate(Smash1, transform.position, transform.rotation);
-            Instantiate(Smash2, transform.position, transform.rotation);
-            AudioManager.Instance.PlaySFX(SparrowQuakeSoundSource);
+            // spawn ground-impact VFX at the lowered position
+            Instantiate(Smash1, spawnPos, transform.rotation);
+			Instantiate(Smash2, spawnPos, transform.rotation);
+			//TODO: REATIVAR O SOM
+            //AudioManager.Instance.PlaySFX(SparrowQuakeSoundSource);
+
+            // start knockback (existing) and a delayed helper to apply AOE damage
             StartCoroutine(DelayedSmashKnockback(SparrowQuake.knockbackDelay, transform.position, SparrowQuake.knockbackRadius, knockbackForce * SparrowQuake.knockbackForceMultiplier, enemyLayer, QueryTriggerInteraction.Ignore));
+            StartCoroutine(DelayedApplySmashAoEDamage(SparrowQuake.knockbackDelay, transform.position));
         }
     }
 
@@ -505,8 +531,7 @@ public class Player : MonoBehaviour
         // Destroy the spawned instance when done.
         Destroy(obj);
     }
-
-    IEnumerator SmashMake()
+	IEnumerator SmashMake()
     {
         yield return _waitForSeconds0_6; // wait x second
         animator.SetBool("SmashUp", false);
@@ -522,6 +547,50 @@ public class Player : MonoBehaviour
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
         EnemyAI.KnockbackEnemiesInRadius(origin, radius, force, layer, query);
+    }
+
+    // Delayed wrapper: after `delay` seconds, apply AOE damage using a helper.
+    private IEnumerator DelayedApplySmashAoEDamage(float delay, Vector3 origin)
+    {
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+
+        float radius = attackRange * 3f; // 3x the character's attack range
+        float damage = attackDamage; // use player's attackDamage as the AOE damage
+        ApplySmashAoEDamage(origin, radius, damage);
+    }
+
+    // Synchronous helper: checks for enemies in radius and applies damage.
+    private void ApplySmashAoEDamage(Vector3 origin, float radius, float damage)
+    {
+        Collider[] hits = new Collider[32];
+        int hitCount = Physics.OverlapSphereNonAlloc(origin, radius, hits, enemyLayer.value, QueryTriggerInteraction.Ignore);
+		Debug.Log($"ApplySmashAoEDamage: origin={origin}, radius={radius}, hitCount={hitCount}");
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            var col = hits[i];
+            if (col == null) continue;
+
+            Debug.Log($"ApplySmashAoE hit: {col.name}");
+
+            var dmg = col.GetComponentInParent<IDamageable>();
+            if (dmg != null)
+            {
+                dmg.TakeDamage(damage);
+                continue;
+            }
+
+            var enemy = col.GetComponentInParent<EnemyAI>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(damage);
+            }
+            else
+            {
+                Debug.LogWarning($"ApplySmashAoEDamage: no damage handler found on {col.name}");
+            }
+        }
     }
 
     IEnumerator Death()

@@ -9,7 +9,7 @@ public class EnemyStats : ScriptableObject
     public float baseDamage = 6f;
     public float baseArmor = 0f;
     public float baseAgility = 1f;
-    public float attackRange = 2f;
+    public float attackRange = 1f;
     public float attackCooldown = 1f;
     [Tooltip("Não esquecer de utilizar números decimais de 0-1 (%)")]
     public float armorPen = 0f;

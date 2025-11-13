@@ -17,7 +17,7 @@ MonoBehaviour:
   baseDamage: 6
   baseArmor: 0
   baseAgility: 1
-  attackRange: 2
+  attackRange: 1.4
   attackCooldown: 1
   armorPen: 0
   healthMultiplierPerStage: 1.15

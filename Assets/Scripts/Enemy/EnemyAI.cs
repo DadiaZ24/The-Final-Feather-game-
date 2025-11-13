@@ -35,9 +35,8 @@ public class EnemyAI : MonoBehaviour, IDamageable
     public Slider enemyHealthSlider;
     private Animator animator;
     private GameObject player;
-    public GameObject damagePopupPrefab;
-    public Canvas worldCanvas;
-
+	public GameObject damagePopupPrefab;
+	
     //privates stats
     private float currentHealth;
     private float lastAttackTime = 0f;
@@ -69,6 +68,25 @@ public class EnemyAI : MonoBehaviour, IDamageable
             enemyHealthSlider.value = currentHealth;
         }
 
+        // If there's a SliderBar (world-space UI) inside this enemy prefab, make it follow this transform
+        // and position it above the enemy using renderer bounds.
+        var sliderBar = GetComponentInChildren<SliderBar>();
+        if (sliderBar != null)
+        {
+            sliderBar.target = this.transform;
+            Renderer rend = GetComponentInChildren<Renderer>();
+            if (rend != null)
+            {
+                float headOffset = rend.bounds.max.y - transform.position.y;
+                headOffset += 0.25f; // small padding above head
+                sliderBar.offset = new Vector3(0f, headOffset, 0f);
+            }
+            else
+            {
+                sliderBar.offset = new Vector3(0f, 1.6f, 0f);
+            }
+        }
+
         // Atribuir valor ao agent e animator
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
@@ -88,9 +106,24 @@ public class EnemyAI : MonoBehaviour, IDamageable
 
     void Update()
     {
-        // Enquanto ele ataca, não dá chase, right? Se não tiver um player, também não vai dar chase a nada.
-        if (isAttacking || player == null)
+        // If there's no player, do nothing.
+        if (player == null)
             return;
+
+        // While attacking we normally don't chase. However, if the player moves far away
+        // we should cancel the attack and resume chasing.
+        if (isAttacking)
+        {
+            float distance = Vector3.Distance(transform.position, player.transform.position);
+            // Use a small hysteresis multiplier so the enemy won't cancel attack immediately when the player steps back a little.
+            float cancelDistance = enemyStats.attackRange * 1.2f;
+            if (distance > cancelDistance)
+            {
+                // Cancel the attack and resume navigation/chase.
+                EndAttack();
+            }
+            return;
+        }
 
         ChasePlayer();
     }

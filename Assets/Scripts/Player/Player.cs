@@ -500,7 +500,49 @@ public class Player : MonoBehaviour
         Quaternion spawnRotation = transform.rotation * Quaternion.Euler(90, 180, 0);
         Vector3 spawnPos = new(transform.position.x, transform.position.y + 0.6f, transform.position.z);
         Instantiate(Scream, spawnPos, spawnRotation);
+		float screamRange = attackRange * 3f;
+        float screamAngle = 60f;
+		Vector3 forward = transform.forward;
+
+        Collider[] hits = new Collider[20];
+
+    	int hitCount = Physics.OverlapSphereNonAlloc(
+       		spawnPos,
+        	screamRange,
+        	hits,
+        	enemyLayer.value,
+        	QueryTriggerInteraction.Ignore
+    	);
+		for (int i = 0; i < hitCount; i++)
+    {
+        var hit = hits[i];
+        if (hit == null) continue;
+
+        Vector3 toTarget = hit.transform.position - spawnPos;
+        toTarget.y = 0f;
+
+        float distance = toTarget.magnitude;
+        if (distance > screamRange)
+            continue;
+
+        float angle = Vector3.Angle(forward, toTarget);
+        if (angle > screamAngle * 0.5f)
+            continue;
+
+        // Apply damage
+        var dmg = hit.GetComponentInParent<IDamageable>();
+        if (dmg != null)
+        {
+            dmg.TakeDamage(Player.Instance.ScreamScript.ScreamDamage);
+        }
+        else
+        {
+            var enemy = hit.GetComponentInParent<EnemyAI>();
+            enemy?.TakeDamage(Player.Instance.ScreamScript.ScreamDamage);
+        }
+	    }
     }
+
 
     // ------- [COROUTINES] ------------------------------------------------------
 
@@ -554,9 +596,9 @@ public class Player : MonoBehaviour
     {
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
-
-        float radius = attackRange * 3f; // 3x the character's attack range
-        float damage = attackDamage; // use player's attackDamage as the AOE damage
+	// TODO MUDAR RANGE
+        float radius = attackRange * 10f; // 3x the character's attack range
+        float damage = Player.Instance.SparrowQuake.SmashDamage; // use player's attackDamage as the AOE damage
         ApplySmashAoEDamage(origin, radius, damage);
     }
 

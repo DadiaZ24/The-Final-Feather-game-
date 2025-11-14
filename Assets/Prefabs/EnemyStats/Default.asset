@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Default
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStats
   enemyName: Default Enemy
-  baseHealth: 100
+  baseHealth: 1
   baseDamage: 6
   baseArmor: 0
   baseAgility: 1

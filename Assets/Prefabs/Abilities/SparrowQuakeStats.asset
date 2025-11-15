@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79d7086dbbba92248890934fb68a9a4c, type: 3}
-  m_Name: SparrowQuake
+  m_Name: SparrowQuakeStats
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAbilities
   knockbackRadius: 5
   knockbackForceMultiplier: 4
@@ -18,5 +18,6 @@ MonoBehaviour:
   isBlocked: 0
   Cooldown: 5
   potions: 0
+  damage: 1000
   energyConsumption: 0
   keyToUse: 81

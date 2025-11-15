@@ -26,3 +26,4 @@ MonoBehaviour:
   agilityMultiplierPerStage: 1.1
   spawnStage: 1
   scorePerKill: 20
+  attackSound: {fileID: 8300000, guid: 4c0700859bfc79e4ba63d650348a854b, type: 3}

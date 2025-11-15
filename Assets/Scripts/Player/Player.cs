@@ -12,7 +12,7 @@ public class Player : MonoBehaviour
     private static readonly WaitForSeconds _waitForSeconds0_6 = new(0.6f);
     private static readonly WaitForSeconds _waitForSeconds0_2 = new(0.2f);
     private static readonly WaitForSeconds _waitForSeconds2 = new(2f);
-	private static readonly WaitForSeconds _waitForSeconds0_5 = new(0.2f);
+    private static readonly WaitForSeconds _waitForSeconds0_5 = new(0.2f);
     //-------------------------------------------------
 
     // ---[STATS SYSTEM]---
@@ -28,8 +28,11 @@ public class Player : MonoBehaviour
     private float currentEnergy;
     [Header("Habilities")]
     public PlayerAbilities SparrowQuake;
+    [NonSerialized] public PlayerAbilities sparrowQuakeAb;
     public PlayerAbilities ScreamScript;
+    [NonSerialized] public PlayerAbilities screamAb;
     public PlayerAbilities HealthPotions;
+    [NonSerialized] public PlayerAbilities healthPotionsAb;
 
     [Header("Regen Settings")]
     public float energyRegenRate = 5f;
@@ -39,6 +42,8 @@ public class Player : MonoBehaviour
     // ---[SOUNDS AND ANIMATIONS]---
     [Header("Sound Settings")]
     public AudioClip SparrowQuakeSoundSource;
+    public AudioClip ScreamSoundSource;
+    public AudioClip BasicAttackSoundSource;
 
     [Header("VFX Settings")]
     public float attackVfxHeigh = 0.4f;
@@ -105,6 +110,9 @@ public class Player : MonoBehaviour
     {
         Instance = this;
         savedScore = false;
+        sparrowQuakeAb = Instantiate(SparrowQuake);
+        screamAb = Instantiate(ScreamScript);
+        healthPotionsAb = Instantiate(HealthPotions);
     }
 
     void Start()
@@ -169,6 +177,11 @@ public class Player : MonoBehaviour
         return currentEnergy;
     }
 
+    public void IncreaseCurrentEnergy(int amount)
+    {
+        currentEnergy += amount;
+    }
+
     public bool UseEnergy(int amount)
     {
         if (currentEnergy >= amount)
@@ -188,6 +201,11 @@ public class Player : MonoBehaviour
         return currentHealth;
     }
 
+    public void IncreaseCurrentHealth(int amount)
+    {
+        currentHealth += amount;
+    }
+
     public void RegenerateHealth(float ammount)
     {
         if (currentHealth < maxHealth)
@@ -204,10 +222,10 @@ public class Player : MonoBehaviour
         int k = GameManager.Instance.k;
         float realArmor = armor * (1 - enemyArmorPen);
         float damageTaken = amount * (k / (realArmor + k));
-        Debug.Log($"Enemy has taken {damageTaken} to the player");
         currentHealth -= damageTaken;
         if (currentHealth < 0)
             currentHealth = 0;
+        UpdateBar();
     }
 
     void UpdatePlayerSpeed()
@@ -365,6 +383,7 @@ public class Player : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0) && canAttack)
         {
+            AudioManager.Instance.PlaySFX(BasicAttackSoundSource, 0.1f);
             canAttack = false;
             StartCoroutine(ResetAttackCooldown());
             // trigger animation
@@ -381,7 +400,6 @@ public class Player : MonoBehaviour
             // Aqui criamos uma esfera em que os inimigos dentro dessa esfera vão levar dano.
             // Use LayerMask.value to make sure we pass an int layer mask to the physics call.
             int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, hits, enemyLayer.value, QueryTriggerInteraction.Ignore);
-            Debug.Log($"Attack sphere check: center={center}, radius={attackRadius}, hitCount={hitCount}");
             Vector3 vfxPos = new(transform.position.x, transform.position.y + attackVfxHeigh, transform.position.z);
             // Instantiate the VFX prefab and destroy the spawned instance when its particle system finishes.
             if (Attack != null)
@@ -395,7 +413,6 @@ public class Player : MonoBehaviour
                 // Vamos buscar o collider atual e o sistema de vida do inimigo.
                 var hit = hits[i];
                 if (hit == null) continue;
-                Debug.Log($"Hit collider: {hit.name}");
                 // Implementação de Interfaces vai-nos permitir verificar se existe algum componente que seja damageable.
                 // Isto é, eu posso ter um inimigo que perde vida, e então vai estar esse método em EnemyHealthSystem.
                 // No entanto, eu posso querer dar dano a uma porta e ter esse método no DoorHealthSystem.
@@ -405,7 +422,6 @@ public class Player : MonoBehaviour
                 var dmg = hit.GetComponentInParent<IDamageable>();
                 if (dmg != null)
                 {
-                    Debug.Log($"Dealing {attackDamage} damage to {hit.name} via IDamageable");
                     dmg.TakeDamage(attackDamage);
                 }
                 else
@@ -414,7 +430,6 @@ public class Player : MonoBehaviour
                     var enemy = hit.GetComponentInParent<EnemyAI>();
                     if (enemy != null)
                     {
-                        Debug.Log($"Dealing {attackDamage} damage to {hit.name} via EnemyAI.TakeDamage fallback");
                         enemy.TakeDamage(attackDamage);
                     }
                     else
@@ -446,20 +461,27 @@ public class Player : MonoBehaviour
 
     void HandleAbilities()
     {
-        if (Input.GetKeyDown(KeyCode.Q) && SparrowQuake.IsReady() && GetCurrentEnergy() >= SparrowQuake.energyConsumption)
+        if (Input.GetKeyDown(KeyCode.Q) && sparrowQuakeAb.IsReady() && GetCurrentEnergy() >= sparrowQuakeAb.energyConsumption)
         {
-            SparrowQuake.Use();
-            UseEnergy(SparrowQuake.energyConsumption);
+            sparrowQuakeAb.Use();
+            UseEnergy(sparrowQuakeAb.energyConsumption);
             verticalVelocity = Mathf.Sqrt(2f * jumpHeight * -Physics.gravity.y);
             animator.SetBool("SmashUp", true);
             StartCoroutine(SmashMake());
         }
-        if (Input.GetKeyDown(KeyCode.E) && ScreamScript.IsReady() && GetCurrentEnergy() >= ScreamScript.energyConsumption)
+        if (Input.GetKeyDown(KeyCode.E) && screamAb.IsReady() && GetCurrentEnergy() >= screamAb.energyConsumption)
         {
-            ScreamScript.Use();
-            UseEnergy(ScreamScript.energyConsumption);
+            screamAb.Use();
+            UseEnergy(screamAb.energyConsumption);
             animator.SetBool("Scream", true);
             StartCoroutine(ScreamMake());
+        }
+        if (Input.GetKeyDown(KeyCode.H) && healthPotionsAb.potions > 0)
+        {
+            // Se quiserem adicionem uma animação para restaurar vida
+            RegenerateHealth(50);
+            healthPotionsAb.potions--;
+            UpdateBar();
         }
     }
 
@@ -485,13 +507,13 @@ public class Player : MonoBehaviour
             Vector3 spawnPos = transform.position + Vector3.down * 0.4f;
             // spawn ground-impact VFX at the lowered position
             Instantiate(Smash1, spawnPos, transform.rotation);
-			Instantiate(Smash2, spawnPos, transform.rotation);
-			//TODO: REATIVAR O SOM
-            //AudioManager.Instance.PlaySFX(SparrowQuakeSoundSource);
+            Instantiate(Smash2, spawnPos, transform.rotation);
+            //TODO: REATIVAR O SOM
+            AudioManager.Instance.PlaySFX(SparrowQuakeSoundSource);
 
             // start knockback (existing) and a delayed helper to apply AOE damage
-            StartCoroutine(DelayedSmashKnockback(SparrowQuake.knockbackDelay, transform.position, SparrowQuake.knockbackRadius, knockbackForce * SparrowQuake.knockbackForceMultiplier, enemyLayer, QueryTriggerInteraction.Ignore));
-            StartCoroutine(DelayedApplySmashAoEDamage(SparrowQuake.knockbackDelay, transform.position));
+            StartCoroutine(DelayedSmashKnockback(sparrowQuakeAb.knockbackDelay, transform.position, sparrowQuakeAb.knockbackRadius, knockbackForce * sparrowQuakeAb.knockbackForceMultiplier, enemyLayer, QueryTriggerInteraction.Ignore));
+            StartCoroutine(DelayedApplySmashAoEDamage(sparrowQuakeAb.knockbackDelay, transform.position));
         }
     }
 
@@ -500,47 +522,48 @@ public class Player : MonoBehaviour
         Quaternion spawnRotation = transform.rotation * Quaternion.Euler(90, 180, 0);
         Vector3 spawnPos = new(transform.position.x, transform.position.y + 0.6f, transform.position.z);
         Instantiate(Scream, spawnPos, spawnRotation);
-		float screamRange = attackRange * 3f;
+        float screamRange = attackRange * 3f;
         float screamAngle = 60f;
-		Vector3 forward = transform.forward;
+        Vector3 forward = transform.forward;
+        AudioManager.Instance.PlaySFX(ScreamSoundSource, 0.1f);
 
         Collider[] hits = new Collider[20];
 
-    	int hitCount = Physics.OverlapSphereNonAlloc(
-       		spawnPos,
-        	screamRange,
-        	hits,
-        	enemyLayer.value,
-        	QueryTriggerInteraction.Ignore
-    	);
-		for (int i = 0; i < hitCount; i++)
-    {
-        var hit = hits[i];
-        if (hit == null) continue;
-
-        Vector3 toTarget = hit.transform.position - spawnPos;
-        toTarget.y = 0f;
-
-        float distance = toTarget.magnitude;
-        if (distance > screamRange)
-            continue;
-
-        float angle = Vector3.Angle(forward, toTarget);
-        if (angle > screamAngle * 0.5f)
-            continue;
-
-        // Apply damage
-        var dmg = hit.GetComponentInParent<IDamageable>();
-        if (dmg != null)
+        int hitCount = Physics.OverlapSphereNonAlloc(
+               spawnPos,
+            screamRange,
+            hits,
+            enemyLayer.value,
+            QueryTriggerInteraction.Ignore
+        );
+        for (int i = 0; i < hitCount; i++)
         {
-            dmg.TakeDamage(Player.Instance.ScreamScript.ScreamDamage);
+            var hit = hits[i];
+            if (hit == null) continue;
+
+            Vector3 toTarget = hit.transform.position - spawnPos;
+            toTarget.y = 0f;
+
+            float distance = toTarget.magnitude;
+            if (distance > screamRange)
+                continue;
+
+            float angle = Vector3.Angle(forward, toTarget);
+            if (angle > screamAngle * 0.5f)
+                continue;
+
+            // Apply damage
+            var dmg = hit.GetComponentInParent<IDamageable>();
+            if (dmg != null)
+            {
+                dmg.TakeDamage(Player.Instance.screamAb.damage);
+            }
+            else
+            {
+                var enemy = hit.GetComponentInParent<EnemyAI>();
+                enemy?.TakeDamage(Player.Instance.screamAb.damage);
+            }
         }
-        else
-        {
-            var enemy = hit.GetComponentInParent<EnemyAI>();
-            enemy?.TakeDamage(Player.Instance.ScreamScript.ScreamDamage);
-        }
-	    }
     }
 
 
@@ -573,7 +596,7 @@ public class Player : MonoBehaviour
         // Destroy the spawned instance when done.
         Destroy(obj);
     }
-	IEnumerator SmashMake()
+    IEnumerator SmashMake()
     {
         yield return _waitForSeconds0_6; // wait x second
         animator.SetBool("SmashUp", false);
@@ -596,9 +619,9 @@ public class Player : MonoBehaviour
     {
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
-	// TODO MUDAR RANGE
+        // TODO MUDAR RANGE
         float radius = attackRange * 10f; // 3x the character's attack range
-        float damage = Player.Instance.SparrowQuake.SmashDamage; // use player's attackDamage as the AOE damage
+        float damage = Player.Instance.sparrowQuakeAb.damage; // use player's attackDamage as the AOE damage
         ApplySmashAoEDamage(origin, radius, damage);
     }
 
@@ -607,18 +630,16 @@ public class Player : MonoBehaviour
     {
         Collider[] hits = new Collider[32];
         int hitCount = Physics.OverlapSphereNonAlloc(origin, radius, hits, enemyLayer.value, QueryTriggerInteraction.Ignore);
-		Debug.Log($"ApplySmashAoEDamage: origin={origin}, radius={radius}, hitCount={hitCount}");
 
         for (int i = 0; i < hitCount; i++)
         {
             var col = hits[i];
             if (col == null) continue;
 
-            Debug.Log($"ApplySmashAoE hit: {col.name}");
-
             var dmg = col.GetComponentInParent<IDamageable>();
             if (dmg != null)
             {
+                Debug.Log($"Smash damage = {damage}");
                 dmg.TakeDamage(damage);
                 continue;
             }

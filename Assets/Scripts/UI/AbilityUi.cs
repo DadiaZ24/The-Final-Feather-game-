@@ -40,25 +40,25 @@ public class AbilityUi : MonoBehaviour
     {
         if (ability == Abilities.SparrowQuake)
         {
-            if (Player.Instance.SparrowQuake.IsReady())
-                UpdateReady(Player.Instance.SparrowQuake);
+            if (Player.Instance.sparrowQuakeAb.IsReady())
+                UpdateReady(Player.Instance.sparrowQuakeAb);
             else
-                UpdateNotReady(Player.Instance.SparrowQuake);
+                UpdateNotReady(Player.Instance.sparrowQuakeAb);
 
         }
         else if (ability == Abilities.Scream)
         {
-            if (Player.Instance.ScreamScript.IsReady())
-                UpdateReady(Player.Instance.ScreamScript);
+            if (Player.Instance.screamAb.IsReady())
+                UpdateReady(Player.Instance.screamAb);
             else
-                UpdateNotReady(Player.Instance.ScreamScript);
+                UpdateNotReady(Player.Instance.screamAb);
         }
         else if (ability == Abilities.HealthPotion)
         {
-            if (Player.Instance.HealthPotions.IsReady())
-                UpdateReady(Player.Instance.HealthPotions, true);
+            if (Player.Instance.healthPotionsAb.IsReady())
+                UpdateReady(Player.Instance.healthPotionsAb, true);
             else
-                UpdateNotReady(Player.Instance.HealthPotions, true);
+                UpdateNotReady(Player.Instance.healthPotionsAb, true);
         }
 
     }

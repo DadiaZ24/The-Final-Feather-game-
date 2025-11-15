@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using NUnit.Framework.Internal;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.SceneManagement;
@@ -11,13 +13,14 @@ public class GameManager : MonoBehaviour
 
     [Header("Stage Settings")]
     public int currentStage = 1;
-    public int enemiesPerStage = 10;
+    public int enemiesCount = 1;
+    public int enemiesPerStage = 1;
     public float spawnRadius = 15f;
     public float minSpawnDistance = 8f;
     public float timeBetweenStages = 3f;
 
     [Header("References")]
-    public GameObject enemyPrefab;
+    public GameObject[] enemyPrefabs;
     public Transform player;
     public Transform[] spawnPoints;
     public GameObject perkMenuUI;
@@ -43,7 +46,7 @@ public class GameManager : MonoBehaviour
     IEnumerator StartStage()
     {
 
-        SpawnEnemies(enemiesPerStage);
+        SpawnEnemies(enemiesCount);
 
         yield return new WaitUntil(() => aliveEnemies.Count == 0);
 
@@ -57,8 +60,9 @@ public class GameManager : MonoBehaviour
         // Penso que seja facil de entender. Instanciamos o prefab do inimigo na posição random.
         for (int i = 0; i < nbr; i++)
         {
+            int id = Random.Range(0, enemyPrefabs.Length);
             Vector3 spawnPos = GetRandomSpawnPosition();
-            GameObject enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+            GameObject enemy = Instantiate(enemyPrefabs[id], spawnPos, Quaternion.identity);
             aliveEnemies.Add(enemy);
 
             var health = enemy.GetComponentInChildren<EnemyAI>();
@@ -105,7 +109,7 @@ public class GameManager : MonoBehaviour
     {
         currentStage++;
         InfoUI.Instance.UpdateStage(currentStage);
-        enemiesPerStage += 5;
+        enemiesCount += enemiesPerStage;
         StartCoroutine(StartStage());
     }
 

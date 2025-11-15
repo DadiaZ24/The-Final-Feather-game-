@@ -9,24 +9,11 @@ public class PlayerAbilities : ScriptableObject
     [SerializeField] public bool isBlocked = false;
     public float Cooldown = 60f;
     public int potions = 0;
-	public float ScreamDamage = 0f;
-	public float SmashDamage = 0f;
+    public float damage = 0f;
 
     public int energyConsumption = 0;
     [SerializeField] public char keyToUse;
     private float lastCall;
-
-    void OnEnable()
-    {
-		potions = 1;
-        lastCall = -Cooldown - 1;
-        Player playerInstance = FindObjectOfType<Player>();
-        if (playerInstance != null)
-        {
-			ScreamDamage = 50f;
-            SmashDamage = 20f;
-        }
-    }
 
     public void Use()
     {

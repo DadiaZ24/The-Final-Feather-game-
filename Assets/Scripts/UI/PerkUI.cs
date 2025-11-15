@@ -21,13 +21,9 @@ public class PerkUI : MonoBehaviour
 	int armor = 0;
 	int armorpen = 0;
 
-	int screamflag = 0;
-	int smashflag = 0;
-
-	int potioncount = 0;
-    // persistent pool of available perk ids; removing an id here prevents it
-    // from appearing again until the pool is refilled.
-    private List<int> availablePerkIds;
+	// persistent pool of available perk ids; removing an id here prevents it
+	// from appearing again until the pool is refilled.
+	private List<int> availablePerkIds;
 
 
 
@@ -79,12 +75,12 @@ public class PerkUI : MonoBehaviour
 		}
 		// Work from a temporary pool so we don't remove items until player picks one.
 		var pool = new List<int>(availablePerkIds);
-		if (smashflag == 0)
+		if (Player.Instance.sparrowQuakeAb.IsBlocked())
 		{
 			pool.Remove(11);
 			pool.Remove(12);
 		}
-		if (screamflag == 0)
+		if (Player.Instance.screamAb.IsBlocked())
 		{
 			pool.Remove(8);
 			pool.Remove(9);
@@ -93,11 +89,11 @@ public class PerkUI : MonoBehaviour
 			pool.Remove(4);
 		if (armorpen == 2)
 			pool.Remove(5);
-		if (screamflag == 1)
+		if (!Player.Instance.screamAb.IsBlocked())
 			pool.Remove(7);
-		if (smashflag == 1)
+		if (!Player.Instance.sparrowQuakeAb.IsBlocked())
 			pool.Remove(10);
-		if (potioncount == 5)
+		if (Player.Instance.healthPotionsAb.potions == 5)
 			pool.Remove(3);
 		var shuffled = pool.OrderBy(x => Random.value).Take(3).ToList();
 		// pool = pool.Where(i => i >= 0 && i < perks.Length).ToList();
@@ -127,10 +123,6 @@ public class PerkUI : MonoBehaviour
 		int id = ids[index];
 		// Remove the selected id from the persistent available list so it won't
 		// be offered again in future menus (until the pool is refilled).
-		if (availablePerkIds != null)
-		{
-			availablePerkIds.Remove(id);
-		}
 		switch (id)
 		{
 			case 0: OnHealthPerk(); break;
@@ -138,7 +130,7 @@ public class PerkUI : MonoBehaviour
 			case 2: OnDamagePerk(); break;
 			case 3: OnPotionPerk(); break;
 			case 4: OnArmorPerk(); break;
-			case 5: OnArmorPenPerk(); break;	
+			case 5: OnArmorPenPerk(); break;
 			case 6: OnEnergyRegenPerk(); break;
 			case 7: OnScreamPerk(); break;
 			case 8: OnScreamCooldownPerk(); break;
@@ -154,7 +146,7 @@ public class PerkUI : MonoBehaviour
 	{
 		if (option == null || perk == null)
 		{
-			Debug.LogWarning($"ApplyPerkToOption: missing option or perk. option={(option==null)}, perk={(perk==null)}");
+			Debug.LogWarning($"ApplyPerkToOption: missing option or perk. option={(option == null)}, perk={(perk == null)}");
 			return;
 		}
 		//Debug.Log($"ApplyPerkToOption: option={option.name}, perk.displayName={perk.displayName}");
@@ -204,6 +196,7 @@ public class PerkUI : MonoBehaviour
 	public void OnHealthPerk()
 	{
 		Player.Instance.maxHealth += 20;
+		Player.Instance.IncreaseCurrentHealth(20);
 		Player.Instance.TakeDamage(0);
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
@@ -211,8 +204,7 @@ public class PerkUI : MonoBehaviour
 
 	public void OnPotionPerk()
 	{
-		potioncount++;
-		Player.Instance.HealthPotions.potions += 1;
+		Player.Instance.healthPotionsAb.potions++;
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}
@@ -242,6 +234,7 @@ public class PerkUI : MonoBehaviour
 	public void OnEnergyPerk()
 	{
 		Player.Instance.maxEnergy += 20;
+		Player.Instance.IncreaseCurrentEnergy(20);
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}
@@ -255,44 +248,42 @@ public class PerkUI : MonoBehaviour
 
 	public void OnScreamPerk()
 	{
-		screamflag = 1;
-		Player.Instance.ScreamScript.SetBlocked(false);
+		Player.Instance.screamAb.SetBlocked(false);
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}
 
 	public void OnScreamDamagePerk()
 	{
-		Player.Instance.ScreamScript.ScreamDamage *= 1.2f;
+		Player.Instance.screamAb.damage *= 1.2f;
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}
 
 	public void OnScreamCooldownPerk()
 	{
-		Player.Instance.ScreamScript.Cooldown -= 1f;
+		Player.Instance.screamAb.Cooldown -= 1f;
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}
 
 	public void OnSmashPerk()
 	{
-		smashflag = 1;
-		Player.Instance.SparrowQuake.SetBlocked(false);
+		Player.Instance.sparrowQuakeAb.SetBlocked(false);
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}
 
 	public void OnSmashDamagePerk()
 	{
-		Player.Instance.SparrowQuake.SmashDamage *= 1.2f;
+		Player.Instance.sparrowQuakeAb.damage *= 1.2f;
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}
 
 	public void OnSmashCooldownPerk()
 	{
-		Player.Instance.SparrowQuake.Cooldown -= 0.5f;
+		Player.Instance.sparrowQuakeAb.Cooldown -= 0.5f;
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}

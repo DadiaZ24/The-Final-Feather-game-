@@ -10,13 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79d7086dbbba92248890934fb68a9a4c, type: 3}
-  m_Name: HealthPotions
+  m_Name: ScreamStats
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAbilities
   knockbackRadius: 5
   knockbackForceMultiplier: 4
   knockbackDelay: 0.1
   isBlocked: 0
   Cooldown: 0
-  potions: 2
+  potions: 0
+  damage: 50
   energyConsumption: 0
-  keyToUse: 72
+  keyToUse: 69

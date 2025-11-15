@@ -35,8 +35,8 @@ public class EnemyAI : MonoBehaviour, IDamageable
     public Slider enemyHealthSlider;
     private Animator animator;
     private GameObject player;
-	public GameObject damagePopupPrefab;
-	
+    public GameObject damagePopupPrefab;
+
     //privates stats
     private float currentHealth;
     private float lastAttackTime = 0f;
@@ -145,8 +145,10 @@ public class EnemyAI : MonoBehaviour, IDamageable
         int k = GameManager.Instance.k;
         float realArmor = enemyArmor * (1 - Player.Instance.armorPen);
         float damageTaken = amount * (k / (realArmor + k));
+        float realDamage = damageTaken > currentHealth ? currentHealth : amount;
         currentHealth -= damageTaken;
-        ShowDamage((int)damageTaken, transform.position + Vector3.up * 2);
+
+        ShowDamage((int)realDamage, transform.position + Vector3.up * 2);
 
         if (enemyHealthSlider != null)
             enemyHealthSlider.value = currentHealth;
@@ -165,6 +167,11 @@ public class EnemyAI : MonoBehaviour, IDamageable
         // Scoring singleton might not be initialized in some execution orders (editor tests, scenes without scoring)
         // Guard call to avoid NullReferenceException
         scoringSystem.AddScore(enemyStats.scorePerKill);
+    }
+
+    public void OnAttacking()
+    {
+        AudioManager.Instance.PlaySFX(enemyStats.attackSound, 0.1f);
     }
 
     void ChasePlayer()

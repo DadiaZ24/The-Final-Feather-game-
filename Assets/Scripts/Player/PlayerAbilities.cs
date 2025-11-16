@@ -6,17 +6,14 @@ public class PlayerAbilities : ScriptableObject
     public float knockbackRadius = 5f;
     public int knockbackForceMultiplier = 4;
     public float knockbackDelay = 0.1f;
-    [SerializeField] private bool isBlocked = false;
+    [SerializeField] public bool isBlocked = false;
     public float Cooldown = 60f;
     public int potions = 0;
+    public float damage = 0f;
+
     public int energyConsumption = 0;
     [SerializeField] public char keyToUse;
     private float lastCall;
-
-    void OnEnable()
-    {
-        lastCall = -Cooldown - 1;
-    }
 
     public void Use()
     {

@@ -1,7 +1,9 @@
 using UnityEditor.SceneManagement;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Linq;
 
 public class PerkUI : MonoBehaviour
 {
@@ -12,6 +14,17 @@ public class PerkUI : MonoBehaviour
 	public GameObject Options1;
 	public GameObject Options2;
 	public GameObject Options3;
+
+	public int id1;
+	public int id2;
+	public int id3;
+	int armor = 0;
+	int armorpen = 0;
+
+	// persistent pool of available perk ids; removing an id here prevents it
+	// from appearing again until the pool is refilled.
+	private List<int> availablePerkIds;
+
 
 
 	void Start()
@@ -47,32 +60,96 @@ public class PerkUI : MonoBehaviour
 
 	public void SetPerks()
 	{
-
 		if (perks == null || perks.Length == 0)
 		{
 			Debug.LogWarning("PerkUI.SetPerks: no perks assigned in inspector.");
 			return;
 		}
 
-		int id = Random.Range(0, 7);
-		// currently using first perk; change to random if desired
-		//TODO: APPLY RANDOM BETWEEN EACH APPLY PERK TO OPTIONS
-		// Apply to UI slots (Options1/2/3 should exist in the scene)
-		ApplyPerkToOption(Options1, perks[id]);
-		id = Random.Range(0, 7);
-		ApplyPerkToOption(Options2, perks[id]);
-		id = Random.Range(0, 7);
-		ApplyPerkToOption(Options3, perks[id]);
+		// Initialize or refill availablePerkIds when needed. If there are fewer
+		// than 3 available, refill so the menu can always show three options.
+		if (availablePerkIds == null || availablePerkIds.Count < 3)
+		{
+			availablePerkIds = new List<int>();
+			for (int i = 0; i < perks.Length; i++) availablePerkIds.Add(i);
+		}
+		// Work from a temporary pool so we don't remove items until player picks one.
+		var pool = new List<int>(availablePerkIds);
+		if (Player.Instance.sparrowQuakeAb.IsBlocked())
+		{
+			pool.Remove(11);
+			pool.Remove(12);
+		}
+		if (Player.Instance.screamAb.IsBlocked())
+		{
+			pool.Remove(8);
+			pool.Remove(9);
+		}
+		if (armor == 1)
+			pool.Remove(4);
+		if (armorpen == 2)
+			pool.Remove(5);
+		if (!Player.Instance.screamAb.IsBlocked())
+			pool.Remove(7);
+		if (!Player.Instance.sparrowQuakeAb.IsBlocked())
+			pool.Remove(10);
+		if (Player.Instance.healthPotionsAb.potions == 5)
+			pool.Remove(3);
+		var shuffled = pool.OrderBy(x => Random.value).Take(3).ToList();
+		// pool = pool.Where(i => i >= 0 && i < perks.Length).ToList();
+		// var shuffled = pool.OrderBy(x => Random.value).ToList();
+		id1 = shuffled[0];
+		id2 = shuffled[1];
+		id3 = shuffled[2];
+		// id1 = pool[Random.Range(0, pool.Count)];
+		// do { id2 = pool[Random.Range(0, pool.Count)]; } while (id2 == id1);
+		// do { id3 = pool[Random.Range(0, pool.Count)]; } while (id3 == id1 || id3 == id2);
+		ApplyPerkToOption(Options1, perks[id1]);
+		ApplyPerkToOption(Options2, perks[id2]);
+		ApplyPerkToOption(Options3, perks[id3]);
+	}
+
+	public void SetPerkOption(int i)
+	{
+		int index;
+		if (i >= 1 && i <= 3) index = i - 1;
+		else if (i >= 0 && i <= 2) index = i;
+		else
+		{
+			Debug.LogWarning("SetPerkOption: received invalid button parameter: " + i);
+			return;
+		}
+		int[] ids = new int[] { id1, id2, id3 };
+		int id = ids[index];
+		// Remove the selected id from the persistent available list so it won't
+		// be offered again in future menus (until the pool is refilled).
+		switch (id)
+		{
+			case 0: OnHealthPerk(); break;
+			case 1: OnEnergyPerk(); break;
+			case 2: OnDamagePerk(); break;
+			case 3: OnPotionPerk(); break;
+			case 4: OnArmorPerk(); break;
+			case 5: OnArmorPenPerk(); break;
+			case 6: OnEnergyRegenPerk(); break;
+			case 7: OnScreamPerk(); break;
+			case 8: OnScreamCooldownPerk(); break;
+			case 9: OnScreamDamagePerk(); break;
+			case 10: OnSmashPerk(); break;
+			case 11: OnSmashDamagePerk(); break;
+			case 12: OnSmashCooldownPerk(); break;
+			default: Debug.LogWarning("SetPerkOption: unknown perk id " + id); break;
+		}
 	}
 
 	private void ApplyPerkToOption(GameObject option, PerkCardElements perk)
 	{
 		if (option == null || perk == null)
 		{
-			Debug.LogWarning($"ApplyPerkToOption: missing option or perk. option={(option==null)}, perk={(perk==null)}");
+			Debug.LogWarning($"ApplyPerkToOption: missing option or perk. option={(option == null)}, perk={(perk == null)}");
 			return;
 		}
-		Debug.Log($"ApplyPerkToOption: option={option.name}, perk.displayName={perk.displayName}");
+		//Debug.Log($"ApplyPerkToOption: option={option.name}, perk.displayName={perk.displayName}");
 
 		// ICON
 		Image iconImage = null;
@@ -119,6 +196,7 @@ public class PerkUI : MonoBehaviour
 	public void OnHealthPerk()
 	{
 		Player.Instance.maxHealth += 20;
+		Player.Instance.IncreaseCurrentHealth(20);
 		Player.Instance.TakeDamage(0);
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
@@ -126,7 +204,7 @@ public class PerkUI : MonoBehaviour
 
 	public void OnPotionPerk()
 	{
-		Player.Instance.HealthPotions.potions += 1;
+		Player.Instance.healthPotionsAb.potions++;
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}
@@ -139,6 +217,7 @@ public class PerkUI : MonoBehaviour
 	}
 	public void OnArmorPerk()
 	{
+		armor++;
 		Player.Instance.armor += 10f;
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
@@ -146,6 +225,7 @@ public class PerkUI : MonoBehaviour
 
 	public void OnArmorPenPerk()
 	{
+		armorpen++;
 		Player.Instance.armorPen += 0.2f;
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
@@ -154,6 +234,7 @@ public class PerkUI : MonoBehaviour
 	public void OnEnergyPerk()
 	{
 		Player.Instance.maxEnergy += 20;
+		Player.Instance.IncreaseCurrentEnergy(20);
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}
@@ -161,6 +242,48 @@ public class PerkUI : MonoBehaviour
 	public void OnEnergyRegenPerk()
 	{
 		Player.Instance.energyRegenRate += 1f;
+		HideMenu();
+		GameManager.Instance.OnPerkSelected();
+	}
+
+	public void OnScreamPerk()
+	{
+		Player.Instance.screamAb.SetBlocked(false);
+		HideMenu();
+		GameManager.Instance.OnPerkSelected();
+	}
+
+	public void OnScreamDamagePerk()
+	{
+		Player.Instance.screamAb.damage *= 1.2f;
+		HideMenu();
+		GameManager.Instance.OnPerkSelected();
+	}
+
+	public void OnScreamCooldownPerk()
+	{
+		Player.Instance.screamAb.Cooldown -= 1f;
+		HideMenu();
+		GameManager.Instance.OnPerkSelected();
+	}
+
+	public void OnSmashPerk()
+	{
+		Player.Instance.sparrowQuakeAb.SetBlocked(false);
+		HideMenu();
+		GameManager.Instance.OnPerkSelected();
+	}
+
+	public void OnSmashDamagePerk()
+	{
+		Player.Instance.sparrowQuakeAb.damage *= 1.2f;
+		HideMenu();
+		GameManager.Instance.OnPerkSelected();
+	}
+
+	public void OnSmashCooldownPerk()
+	{
+		Player.Instance.sparrowQuakeAb.Cooldown -= 0.5f;
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}

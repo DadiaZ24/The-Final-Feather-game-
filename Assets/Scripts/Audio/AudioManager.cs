@@ -41,12 +41,12 @@ public class AudioManager : MonoBehaviour
         musicSource.Play();
     }
 
-    public void PlaySFX(AudioClip clip)
+    public void PlaySFX(AudioClip clip, float volume = 1)
     {
         if (!clip) return;
 
+        sfxSource.volume = volume;
         sfxSource.PlayOneShot(clip);
-        Debug.Log("Played SFX Sound");
     }
 
     public void StopMusic()

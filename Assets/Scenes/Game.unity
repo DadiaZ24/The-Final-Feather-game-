@@ -2119,7 +2119,7 @@ GameObject:
   - component: {fileID: 311491931}
   - component: {fileID: 311491930}
   m_Layer: 5
-  m_Name: Option 1 (1)
+  m_Name: Option 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2144,7 +2144,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -51.085938, y: 0}
   m_SizeDelta: {x: 232.91406, y: 39.726196}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &311491930
@@ -2193,12 +2193,12 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1123222890}
         m_TargetAssemblyTypeName: PerkUI, Assembly-CSharp
-        m_MethodName: OnHealthPerk
-        m_Mode: 1
+        m_MethodName: SetPerkOption
+        m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
+          m_IntArgument: 1
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -5848,11 +5848,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   currentStage: 1
-  enemiesPerStage: 1
+  enemiesCount: 1
+  enemiesPerStage: 0
   spawnRadius: 15
   minSpawnDistance: 8
   timeBetweenStages: 3
-  enemyPrefab: {fileID: 5310191315388989799, guid: bc7be13f64eb7f648ab3057bbe7e539f, type: 3}
+  enemyPrefabs:
+  - {fileID: 6412806835819166393, guid: 58bb5f91db5b25f4ea0c8382eb1c9095, type: 3}
+  - {fileID: 6412806835819166393, guid: 7cbd58979e6bb484a9eca368c9bc06ac, type: 3}
   player: {fileID: 1440576219}
   spawnPoints: []
   perkMenuUI: {fileID: 1123222889}
@@ -6291,7 +6294,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: 44c6f491610b4d34d92daaf65b373fb2, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: 60c486414af28e3439c8dc08df9abee4, type: 2}
   m_BuildHeightMesh: 0
 --- !u!1 &1117156719
 GameObject:
@@ -10202,7 +10205,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -232.91406, y: 0}
+  m_AnchoredPosition: {x: -284, y: 0}
   m_SizeDelta: {x: 232.91406, y: 39.7262}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1439865181
@@ -10251,12 +10254,12 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1123222890}
         m_TargetAssemblyTypeName: PerkUI, Assembly-CSharp
-        m_MethodName: OnHealthPerk
-        m_Mode: 1
+        m_MethodName: SetPerkOption
+        m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
+          m_IntArgument: 3
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -10331,7 +10334,9 @@ MonoBehaviour:
   ScreamScript: {fileID: 11400000, guid: 76c2ad3552b7d984f9b3c386a0278d57, type: 2}
   HealthPotions: {fileID: 11400000, guid: ac207e603269baf4e8767cbdddcace70, type: 2}
   energyRegenRate: 5
-  SparrowQuakeSoundSource: {fileID: 1201125030}
+  SparrowQuakeSoundSource: {fileID: 8300000, guid: 6279a79f752a48142bcc52e160cf83f0, type: 3}
+  ScreamSoundSource: {fileID: 8300000, guid: 20188c0053db4934980fe237f714546c, type: 3}
+  BasicAttackSoundSource: {fileID: 8300000, guid: c9929797efef7dd418921470ff07a3df, type: 3}
   attackVfxHeigh: 0.4
   Smash1: {fileID: 9157105887711914197, guid: c4f829cb7dd4b864caf8832ec5b1ee55, type: 3}
   Smash2: {fileID: 5137123306192418792, guid: 5a8d99fb95262ea458a7b580f2a1611c, type: 3}
@@ -10387,13 +10392,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 371a2222dcdaf144cb4c65dc0fcba582, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatsSystem
-  maxEnergy: 100
-  energyRegenRate: 5
-  maxHealth: 100
-  healthRegenRate: 0.5
-  basicAttackDamage: 1
-  armor: 0
-  agility: 0
 --- !u!1 &1444637828
 GameObject:
   m_ObjectHideFlags: 0
@@ -14386,7 +14384,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -116.45703, y: 0}
+  m_AnchoredPosition: {x: -167.54297, y: 0}
   m_SizeDelta: {x: 232.91406, y: 39.7262}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1848116569
@@ -14435,12 +14433,12 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1123222890}
         m_TargetAssemblyTypeName: PerkUI, Assembly-CSharp
-        m_MethodName: OnSpeedPerk
-        m_Mode: 1
+        m_MethodName: SetPerkOption
+        m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
+          m_IntArgument: 2
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -15370,9 +15368,233 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: Options1
+      value: 
+      objectReference: {fileID: 311491928}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: Options2
+      value: 
+      objectReference: {fileID: 1848116567}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: Options3
+      value: 
+      objectReference: {fileID: 1439865179}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
       propertyPath: playerSliderBar
       value: 
       objectReference: {fileID: 2120678637}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.size
+      value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[0].icon
+      value: 
+      objectReference: {fileID: 98175779909115069, guid: 8f409744e8771ce48925ddb92254d68f, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[1].icon
+      value: 
+      objectReference: {fileID: 4179108079076011510, guid: bcb2481b34ef0314a9d5dfa588b536d9, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[2].icon
+      value: 
+      objectReference: {fileID: 1984885954538409583, guid: e84c18013c93d3444a162c40fa2b0481, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[3].icon
+      value: 
+      objectReference: {fileID: 98175779909115069, guid: 68c3636f95ecdfb4c9a7f4a8610fc215, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[4].icon
+      value: 
+      objectReference: {fileID: 98175779909115069, guid: 0dfd69de7366d24489866f0602a15e4b, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[5].icon
+      value: 
+      objectReference: {fileID: 98175779909115069, guid: 3742ce557efaf244fbbed6a0a7bd3fc3, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[6].icon
+      value: 
+      objectReference: {fileID: 98175779909115069, guid: a61c9c6d772592c458f6f9d240a175a3, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[7].icon
+      value: 
+      objectReference: {fileID: 98175779909115069, guid: 4b55ce66bcb70814392cbb31544ffc05, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[8].icon
+      value: 
+      objectReference: {fileID: 98175779909115069, guid: aaf89d8b97862fa4ea8b05177d270831, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[9].icon
+      value: 
+      objectReference: {fileID: 98175779909115069, guid: d5fd0a479a8d8f14b8576a33482a11eb, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[0].title
+      value: 
+      objectReference: {fileID: 1567078987111159678, guid: c27ff1593f88abf4b89c2959dc61ef13, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[10].icon
+      value: 
+      objectReference: {fileID: 98175779909115069, guid: 3c015a5b8a0f94846b2d6f19839695bb, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[11].icon
+      value: 
+      objectReference: {fileID: 98175779909115069, guid: 40b80d85268a20e4aa841abf1ff0f5ea, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[12].icon
+      value: 
+      objectReference: {fileID: 98175779909115069, guid: 899130ed63e4b5d4c997170ff82c2e63, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[1].title
+      value: 
+      objectReference: {fileID: 7934403103496687868, guid: 4edd8c5e91553a647af1f83b556c6f02, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[2].title
+      value: 
+      objectReference: {fileID: 7035621251720791439, guid: 08ae3443a10e50a449a3e80e4c3de3c1, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[3].title
+      value: 
+      objectReference: {fileID: 1567078987111159678, guid: e6f5e36e444d8ec4e9b2ffc303258c7c, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[4].title
+      value: 
+      objectReference: {fileID: 1567078987111159678, guid: dc3f8341a4f27e041aa4524648ebc0b6, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[5].title
+      value: 
+      objectReference: {fileID: 1567078987111159678, guid: d4ff68c7f84d47e4ba4dec4e6756f0cc, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[6].title
+      value: 
+      objectReference: {fileID: 1567078987111159678, guid: 40b2cffa7da53fe4c9d78d7474f0d631, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[7].title
+      value: 
+      objectReference: {fileID: 1567078987111159678, guid: ce0b9e3fd0dbdf2438a3e14aa07c574c, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[8].title
+      value: 
+      objectReference: {fileID: 1567078987111159678, guid: b42c08669f4f700489f12dec20ec96e7, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[9].title
+      value: 
+      objectReference: {fileID: 1567078987111159678, guid: 099c688f6c975e64a9807e3c5447fe0f, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[10].title
+      value: 
+      objectReference: {fileID: 1567078987111159678, guid: de15e90c693b8fb4b8721ae1452225c2, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[11].title
+      value: 
+      objectReference: {fileID: 1567078987111159678, guid: 22de2b8c5924e3c49b6bc629b0df1cf1, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[12].title
+      value: 
+      objectReference: {fileID: 1567078987111159678, guid: e3fd2130f998b124fb7342cedfc31c8e, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[0].description
+      value: 
+      objectReference: {fileID: 5503734031511546690, guid: e3eab2e09e3dfe542af3aa3b8c47d30b, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[0].displayName
+      value: Health
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[1].description
+      value: 
+      objectReference: {fileID: 5296706611713078053, guid: 69c462bbdcbb85e46b1a4aa8e6b305a3, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[1].displayName
+      value: Energy
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[2].description
+      value: 
+      objectReference: {fileID: 4062412024398498686, guid: 0131a9a2ea7e8f641a9696547245b911, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[2].displayName
+      value: Damage
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[3].description
+      value: 
+      objectReference: {fileID: 5503734031511546690, guid: 93f6171eaa4166c4abe137c3db15eef7, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[3].displayName
+      value: Potions
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[4].description
+      value: 
+      objectReference: {fileID: 5503734031511546690, guid: 86dd2b6500874ce4d8ddddc5ff853ef2, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[4].displayName
+      value: Armor
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[5].description
+      value: 
+      objectReference: {fileID: 5503734031511546690, guid: 2b269c8caacceff49a4522d23ee4236f, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[5].displayName
+      value: Armorpen
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[6].description
+      value: 
+      objectReference: {fileID: 5503734031511546690, guid: 2349a1890a498b04abc3e4c1b398a30e, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[6].displayName
+      value: Energyregen
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[7].description
+      value: 
+      objectReference: {fileID: 5503734031511546690, guid: 4436aaef106109446a8413fbcb28a0e9, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[7].displayName
+      value: Scream
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[8].description
+      value: 
+      objectReference: {fileID: 5503734031511546690, guid: 376c2509f21e32740b4b7794a1a2bc4d, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[8].displayName
+      value: ScreamCooldown
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[9].description
+      value: 
+      objectReference: {fileID: 5503734031511546690, guid: b91d110e865eb824eafcb6fee868ba95, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[9].displayName
+      value: ScreamDamage
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[10].description
+      value: 
+      objectReference: {fileID: 5503734031511546690, guid: 58ff5999725c62744b48754dabc9a1b6, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[10].displayName
+      value: Smash
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[11].description
+      value: 
+      objectReference: {fileID: 5503734031511546690, guid: 969869fe345aede4199c12f848ddf8cc, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[11].displayName
+      value: SmashDamage
+      objectReference: {fileID: 0}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[12].description
+      value: 
+      objectReference: {fileID: 5503734031511546690, guid: 579e2531d0119e14e9b15bad1db61ad2, type: 3}
+    - target: {fileID: 3496458084938935238, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
+      propertyPath: perks.Array.data[12].displayName
+      value: SmashCooldown
+      objectReference: {fileID: 0}
     - target: {fileID: 4464244510603810579, guid: e9f5610d1b2eed14aa45b3aff23f3d7f, type: 3}
       propertyPath: m_fontSize
       value: 24

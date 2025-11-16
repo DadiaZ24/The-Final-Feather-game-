@@ -490,7 +490,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34e935d35c6473d4cbdf7f59c6592407, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
-  enemyStats: {fileID: 11400000, guid: 3a4b5abad5cd4ac43bac948f07bb3ff4, type: 2}
+  enemyStats: {fileID: 11400000, guid: edead40cfa8b2dd4397e91720822f74f, type: 2}
   enemy: {fileID: 6412806835819166393}
   enemyHealthSlider: {fileID: 1967967975535025086}
   damagePopupPrefab: {fileID: 7630174520379461583, guid: c64c2787e7533c742bb86c441aa9893a, type: 3}

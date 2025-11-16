@@ -64,17 +64,17 @@
             {
                 "type": "System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
                 "key": "ShapeBuilder.ActiveShapeIndex",
-                "value": "{\"m_Value\":8}"
+                "value": "{\"m_Value\":1}"
             },
             {
                 "type": "UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
                 "key": "ShapeBuilder.LastSize.Cube",
-                "value": "{\"m_Value\":{\"x\":-83.9061050415039,\"y\":-3.7391462326049806,\"z\":-1.6373214721679688}}"
+                "value": "{\"m_Value\":{\"x\":-3.4366438388824465,\"y\":1.00423002243042,\"z\":3.035311222076416}}"
             },
             {
                 "type": "UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
                 "key": "ShapeBuilder.LastSize.Plane",
-                "value": "{\"m_Value\":{\"x\":89.11347198486328,\"y\":0.0,\"z\":3.665848731994629}}"
+                "value": "{\"m_Value\":{\"x\":-2.239548683166504,\"y\":0.0,\"z\":2.0890049934387209}}"
             },
             {
                 "type": "UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
@@ -104,7 +104,7 @@
             {
                 "type": "UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
                 "key": "ShapeBuilder.LastSize.Pipe",
-                "value": "{\"m_Value\":{\"x\":32.14912414550781,\"y\":34.66067886352539,\"z\":37.5838623046875}}"
+                "value": "{\"m_Value\":{\"x\":-3.366457462310791,\"y\":0.49595871567726138,\"z\":2.5539369583129885}}"
             },
             {
                 "type": "UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",

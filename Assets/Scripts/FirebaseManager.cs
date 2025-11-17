@@ -33,7 +33,6 @@ public class FirebaseManager : MonoBehaviour
         {
             if (task.IsFaulted)
             {
-                Debug.LogError("Task Failed: " + task.Exception);
                 return;
             }
 
@@ -56,7 +55,6 @@ public class FirebaseManager : MonoBehaviour
     {
         if (db == null)
         {
-            Debug.LogError("Firebase not connected");
             return;
         }
 
@@ -73,7 +71,6 @@ public class FirebaseManager : MonoBehaviour
         {
             if (task.IsFaulted)
             {
-                Debug.LogError("Error getting scores!");
                 return;
             }
 

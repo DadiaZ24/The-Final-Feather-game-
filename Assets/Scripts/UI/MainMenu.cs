@@ -38,7 +38,6 @@ public class MainMenu : MonoBehaviour
 
         if (string.IsNullOrEmpty(nickname))
         {
-            Debug.LogWarning("Nickname vazio!");
             return;
         }
 
@@ -69,7 +68,6 @@ public class MainMenu : MonoBehaviour
 
     public void QuitGame()
     {
-        Debug.Log("Quit Game");
         Application.Quit();
     }
 }

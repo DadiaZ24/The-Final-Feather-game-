@@ -20,9 +20,10 @@ public class EnemyStats : ScriptableObject
     public int spawnStage = 1;
     public long scorePerKill = 20;
     public AudioClip attackSound;
+	public AudioClip deathSound;
 
-    public float GetHealth(int currentStage) => (float)(baseHealth * Math.Pow(healthMultiplierPerStage, currentStage - spawnStage));
-    public float GetDamage(int currentStage) => (float)(baseDamage * Mathf.Pow(damageMultiplierPerStage, currentStage - spawnStage));
-    public float GetArmor(int currentStage) => (float)(baseArmor + armorFlatIncreasePerStage * (currentStage - spawnStage));
-    public float GetAgility(int currentStage) => (float)(baseAgility * Mathf.Pow(agilityMultiplierPerStage, currentStage - spawnStage));
+    public float GetHealth(int currentStage) => (float)(baseHealth * healthMultiplierPerStage); // Math.Pow(healthMultiplierPerStage, currentStage - spawnStage));
+    public float GetDamage(int currentStage) => (float)(baseDamage * damageMultiplierPerStage); // Mathf.Pow(damageMultiplierPerStage, currentStage - spawnStage));
+    public float GetArmor(int currentStage) => (float)(baseArmor + armorFlatIncreasePerStage); //* (currentStage - spawnStage));
+    public float GetAgility(int currentStage) => (float)(baseAgility * agilityMultiplierPerStage); //* Mathf.Pow(agilityMultiplierPerStage, currentStage - spawnStage));
 }

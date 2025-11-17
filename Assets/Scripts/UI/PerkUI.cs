@@ -62,7 +62,6 @@ public class PerkUI : MonoBehaviour
 	{
 		if (perks == null || perks.Length == 0)
 		{
-			Debug.LogWarning("PerkUI.SetPerks: no perks assigned in inspector.");
 			return;
 		}
 
@@ -85,9 +84,9 @@ public class PerkUI : MonoBehaviour
 			pool.Remove(8);
 			pool.Remove(9);
 		}
-		if (armor == 1)
+		if (armor == 6)
 			pool.Remove(4);
-		if (armorpen == 2)
+		if (armorpen == 6)
 			pool.Remove(5);
 		if (!Player.Instance.screamAb.IsBlocked())
 			pool.Remove(7);
@@ -116,7 +115,6 @@ public class PerkUI : MonoBehaviour
 		else if (i >= 0 && i <= 2) index = i;
 		else
 		{
-			Debug.LogWarning("SetPerkOption: received invalid button parameter: " + i);
 			return;
 		}
 		int[] ids = new int[] { id1, id2, id3 };
@@ -138,7 +136,6 @@ public class PerkUI : MonoBehaviour
 			case 10: OnSmashPerk(); break;
 			case 11: OnSmashDamagePerk(); break;
 			case 12: OnSmashCooldownPerk(); break;
-			default: Debug.LogWarning("SetPerkOption: unknown perk id " + id); break;
 		}
 	}
 
@@ -146,11 +143,8 @@ public class PerkUI : MonoBehaviour
 	{
 		if (option == null || perk == null)
 		{
-			Debug.LogWarning($"ApplyPerkToOption: missing option or perk. option={(option == null)}, perk={(perk == null)}");
 			return;
 		}
-		//Debug.Log($"ApplyPerkToOption: option={option.name}, perk.displayName={perk.displayName}");
-
 		// ICON
 		Image iconImage = null;
 		var iconTransform = option.transform.Find("Icon");
@@ -211,7 +205,7 @@ public class PerkUI : MonoBehaviour
 
 	public void OnDamagePerk()
 	{
-		Player.Instance.attackDamage += 2f;
+		Player.Instance.attackDamage += 20f;
 		HideMenu();
 		GameManager.Instance.OnPerkSelected();
 	}

@@ -94,7 +94,6 @@ public class GameManager : MonoBehaviour
         if (NavMesh.SamplePosition(samplePos, out NavMeshHit hit, 20f, NavMesh.AllAreas))
             return hit.position;
 
-        Debug.LogError($"GameManager: No NavMesh found within radius {spawnRadius} around spawner.Cannot spawn enemy.");
         return Vector3.zero;
     }
 

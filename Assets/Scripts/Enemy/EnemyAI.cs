@@ -36,6 +36,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
     private Animator animator;
     private GameObject player;
     public GameObject damagePopupPrefab;
+	public Collider deathCollider;
 
     //privates stats
     private float currentHealth;
@@ -58,7 +59,6 @@ public class EnemyAI : MonoBehaviour, IDamageable
 
         if (!enemyHealthSlider)
         {
-            Debug.LogError("No enemyHealthSlider!");
             return;
         }
         currentHealth = enemyStats.GetHealth(GameManager.Instance.currentStage);
@@ -132,7 +132,6 @@ public class EnemyAI : MonoBehaviour, IDamageable
     {
         if (!damagePopupPrefab)
         {
-            Debug.LogError("DamagaPopup Prefab not assigned!");
             return;
         }
         GameObject popup = Instantiate(damagePopupPrefab, position, Quaternion.identity);
@@ -153,7 +152,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
         if (enemyHealthSlider != null)
             enemyHealthSlider.value = currentHealth;
 
-        if (currentHealth < 0)
+        if (currentHealth <= 0)
         {
             currentHealth = 0;
             Die();
@@ -163,11 +162,16 @@ public class EnemyAI : MonoBehaviour, IDamageable
     public void Die()
     {
         OnDeath?.Invoke();
-        Destroy(enemy);
-        // Scoring singleton might not be initialized in some execution orders (editor tests, scenes without scoring)
-        // Guard call to avoid NullReferenceException
+		animator.SetBool("isDead", true);
+		AudioManager.Instance.PlaySFX(enemyStats.deathSound, 0.2f);
+		agent.isStopped = true;
         scoringSystem.AddScore(enemyStats.scorePerKill);
     }
+
+	public void DestroyEnemy() 
+	{
+		Destroy(enemy);
+	}
 
     public void OnAttacking()
     {
@@ -185,6 +189,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
             if (agent != null && agent.isOnNavMesh)
             {
                 agent.isStopped = false;
+                agent.speed = enemyStats.GetAgility(GameManager.Instance.currentStage); // Set chase speed from EnemyStats
                 // Dá chase a posição do player
                 agent.SetDestination(player.transform.position);
             }
@@ -228,7 +233,9 @@ public class EnemyAI : MonoBehaviour, IDamageable
         // Voltar a calcular distancia para verificar se levamos dano
         float distance = Vector3.Distance(transform.position, player.transform.position);
         if (distance <= enemyStats.attackRange)
+		{
             Player.Instance.TakeDamage(enemyStats.GetDamage(GameManager.Instance.currentStage));
+		}
     }
 
     // É chamado pelo Animation Event quando atinge o exato frame que escolhemos para isso.
@@ -319,7 +326,12 @@ public class EnemyAI : MonoBehaviour, IDamageable
 
     private IEnumerator DoPhysicsKnockback(Vector3 direction, float force)
     {
-        isAttacking = false;
+        // NOTE: do NOT forcibly cancel 'isAttacking' here.
+        // The previous implementation set isAttacking = false which cancelled
+        // the enemy's attack whenever the player applied knockback. To keep
+        // the enemy attack intact while still applying knockback movement,
+        // we only stop navigation/physics-driven motion but preserve the
+        // attacking flag so animations and attack timing continue.
 
         // Stop AI movement
         if (agent != null)
@@ -336,7 +348,7 @@ public class EnemyAI : MonoBehaviour, IDamageable
         if (animator != null)
         {
             animator.SetBool("isChasing", false);
-            animator.SetBool("isAttacking", false);
+            // keep the current isAttacking animator flag so knockback doesn't cancel attacks
         }
 
         // Apply impulse
@@ -384,7 +396,8 @@ public class EnemyAI : MonoBehaviour, IDamageable
 
     private IEnumerator DoNavMeshKnockback(Vector3 direction, float force)
     {
-        isAttacking = false;
+        // NOTE: do NOT forcibly cancel 'isAttacking' here for the same reason
+        // described in the physics knockback implementation.
 
         // Stop NavMeshAgent and prepare for manual transform-based movement
         if (agent != null)
@@ -395,13 +408,13 @@ public class EnemyAI : MonoBehaviour, IDamageable
                 agent.ResetPath();
                 agent.velocity = Vector3.zero;
             }
-            agent.enabled = false;
+           agent.enabled = false;
         }
 
         if (animator != null)
         {
             animator.SetBool("isChasing", false);
-            animator.SetBool("isAttacking", false);
+            // keep the current isAttacking animator flag so knockback doesn't cancel attacks
         }
 
         // If we have a non-kinematic Rigidbody, temporarily make it kinematic so transform moves won't be fought by physics.

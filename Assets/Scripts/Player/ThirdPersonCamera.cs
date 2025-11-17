@@ -16,7 +16,6 @@ public class ThirdPersonCamera : MonoBehaviour
     {
         if (!player)
         {
-            Debug.LogError("There is no player attached to the script");
             return;
         }
 

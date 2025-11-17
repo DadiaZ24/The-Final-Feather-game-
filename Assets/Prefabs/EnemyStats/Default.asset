@@ -14,16 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStats
   enemyName: Default Enemy
   baseHealth: 55
-  baseDamage: 0
+  baseDamage: 5
   baseArmor: 0
-  baseAgility: 1
-  attackRange: 1.4
-  attackCooldown: 1
+  baseAgility: 1.6
+  attackRange: 1.2
+  attackCooldown: 0.8
   armorPen: 0
   healthMultiplierPerStage: 1.15
   damageMultiplierPerStage: 1.1
-  armorFlatIncreasePerStage: 5
-  agilityMultiplierPerStage: 1.1
+  armorFlatIncreasePerStage: 2
+  agilityMultiplierPerStage: 1.15
   spawnStage: 1
-  scorePerKill: 20
+  scorePerKill: 5
   attackSound: {fileID: 8300000, guid: 00f6f6cf19ef3424da831f7f4a404ab7, type: 3}
+  deathSound: {fileID: 8300000, guid: 6a491e49c41417440b879a82679e530d, type: 3}

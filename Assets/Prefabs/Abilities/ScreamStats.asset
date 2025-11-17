@@ -15,9 +15,9 @@ MonoBehaviour:
   knockbackRadius: 5
   knockbackForceMultiplier: 4
   knockbackDelay: 0.1
-  isBlocked: 0
-  Cooldown: 0
+  isBlocked: 1
+  Cooldown: 40
   potions: 0
   damage: 50
-  energyConsumption: 0
+  energyConsumption: 55
   keyToUse: 69

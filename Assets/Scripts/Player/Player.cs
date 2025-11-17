@@ -44,6 +44,7 @@ public class Player : MonoBehaviour
     public AudioClip SparrowQuakeSoundSource;
     public AudioClip ScreamSoundSource;
     public AudioClip BasicAttackSoundSource;
+    public AudioClip PotionHealSoundSource;
 
     [Header("VFX Settings")]
     public float attackVfxHeigh = 0.4f;
@@ -128,7 +129,6 @@ public class Player : MonoBehaviour
         playerSliderBar = GetComponentInChildren<SliderBar>();
         if (playerSliderBar == null)
         {
-            Debug.LogError("playerSliderBar is null");
             return;
         }
         UpdateBar();
@@ -191,7 +191,6 @@ public class Player : MonoBehaviour
         }
         else
         {
-            Debug.Log("Not enough energy");
             return false;
         }
     }
@@ -383,7 +382,6 @@ public class Player : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0) && canAttack)
         {
-            AudioManager.Instance.PlaySFX(BasicAttackSoundSource, 0.1f);
             canAttack = false;
             StartCoroutine(ResetAttackCooldown());
             // trigger animation
@@ -401,6 +399,7 @@ public class Player : MonoBehaviour
             // Use LayerMask.value to make sure we pass an int layer mask to the physics call.
             int hitCount = Physics.OverlapSphereNonAlloc(center, attackRadius, hits, enemyLayer.value, QueryTriggerInteraction.Ignore);
             Vector3 vfxPos = new(transform.position.x, transform.position.y + attackVfxHeigh, transform.position.z);
+			AudioManager.Instance.PlaySFX(BasicAttackSoundSource, 0.1f);
             // Instantiate the VFX prefab and destroy the spawned instance when its particle system finishes.
             if (Attack != null)
             {
@@ -476,9 +475,12 @@ public class Player : MonoBehaviour
             animator.SetBool("Scream", true);
             StartCoroutine(ScreamMake());
         }
-        if (Input.GetKeyDown(KeyCode.H) && healthPotionsAb.potions > 0)
+        if (Input.GetKeyDown(KeyCode.R) && healthPotionsAb.potions > 0)
         {
-            // Se quiserem adicionem uma animação para restaurar vida
+            Vector3 spawnPos = transform.position + Vector3.down * 0.4f;
+            var healVFX = Instantiate(Heal, spawnPos, transform.rotation);
+			healVFX.transform.SetParent(transform);
+            AudioManager.Instance.PlaySFX(PotionHealSoundSource, 0.2f);
             RegenerateHealth(50);
             healthPotionsAb.potions--;
             UpdateBar();
@@ -620,7 +622,7 @@ public class Player : MonoBehaviour
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
         // TODO MUDAR RANGE
-        float radius = attackRange * 10f; // 3x the character's attack range
+        float radius = attackRange * 2.5f;
         float damage = Player.Instance.sparrowQuakeAb.damage; // use player's attackDamage as the AOE damage
         ApplySmashAoEDamage(origin, radius, damage);
     }
@@ -639,7 +641,6 @@ public class Player : MonoBehaviour
             var dmg = col.GetComponentInParent<IDamageable>();
             if (dmg != null)
             {
-                Debug.Log($"Smash damage = {damage}");
                 dmg.TakeDamage(damage);
                 continue;
             }

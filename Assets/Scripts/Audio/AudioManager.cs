@@ -31,7 +31,7 @@ public class AudioManager : MonoBehaviour
         PlayMusic(musicSource.clip);
     }
 
-    public void PlayMusic(AudioClip clip, float volume = 1f)
+    public void PlayMusic(AudioClip clip, float volume = 0.7f)
     {
         if (!clip) return;
 

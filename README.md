@@ -12,7 +12,7 @@ Themes:
 
 :dart: **Core Concept**
 
-The player controls a duck, the last one of its kind, agains endless hordes of creatures. As time passes, stronger and more numerous enemies appear. The player must survive for as long as possible, unlocking new abilities, and aim to beat their personal record
+The player controls a sparrow, the last one of its kind, against endless hordes of creatures. As time passes, stronger and more numerous enemies appear. The player must survive for as long as possible, unlocking new abilities, and aim to beat their personal record
 
 :joystick: ***Core Mechanics***
 
